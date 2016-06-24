@@ -25,29 +25,31 @@ type Metrics struct {
 }
 
 func (m *Metrics) Init(opts *StartOptions) {
+	labels := []string{"method", "status"}
+
 	m.countTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: opts.Namespace,
 		Name: "http_response_count_total",
 		Help: "Amount of processed HTTP requests",
-	}, []string{"method"})
+	}, labels)
 
 	m.bytesTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: opts.Namespace,
 		Name: "http_response_size_bytes",
 		Help: "Total amount of transferred bytes",
-	}, []string{"method"})
+	}, labels)
 
 	m.upstreamSeconds = prometheus.NewSummaryVec(prometheus.SummaryOpts{
 		Namespace: opts.Namespace,
 		Name: "http_upstream_time_seconds",
 		Help: "Time needed by upstream servers to handle requests",
-	}, []string{"method"})
+	}, labels)
 
 	m.responseSeconds = prometheus.NewSummaryVec(prometheus.SummaryOpts{
 		Namespace: opts.Namespace,
 		Name: "http_response_time_seconds",
 		Help: "Time needed by NGINX to handle requests",
-	}, []string{"method"})
+	}, labels)
 
 	prometheus.MustRegister(m.countTotal)
 	prometheus.MustRegister(m.bytesTotal)
@@ -88,24 +90,30 @@ func main() {
 					continue
 				}
 
-				var method = "UNKNOWN"
+				method := "UNKNOWN"
+				status := "0"
+
 				if request, err := entry.Field("request"); err == nil {
 					f := strings.Split(request, " ")
 					method = f[0]
 				}
 
-				metrics.countTotal.WithLabelValues(method).Inc()
+				if s, err := entry.Field("status"); err == nil {
+					status = s
+				}
+
+				metrics.countTotal.WithLabelValues(method, status).Inc()
 
 				if bytes, err := entry.FloatField("body_bytes_sent"); err == nil {
-					metrics.bytesTotal.WithLabelValues(method).Add(bytes)
+					metrics.bytesTotal.WithLabelValues(method, status).Add(bytes)
 				}
 
 				if upstreamTime, err := entry.FloatField("upstream_response_time"); err == nil {
-					metrics.upstreamSeconds.WithLabelValues(method).Observe(upstreamTime)
+					metrics.upstreamSeconds.WithLabelValues(method, status).Observe(upstreamTime)
 				}
 
 				if responseTime, err := entry.FloatField("request_time"); err == nil {
-					metrics.responseSeconds.WithLabelValues(method).Observe(responseTime)
+					metrics.responseSeconds.WithLabelValues(method, status).Observe(responseTime)
 				}
 
 				fmt.Println(entry)
