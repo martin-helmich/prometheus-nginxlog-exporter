@@ -1,8 +1,24 @@
+/*
+ * Copyright 2016 Martin Helmich <kontakt@martin-helmich.de>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package main
 
-import "fmt"
 import (
 	"flag"
+	"fmt"
 	"github.com/hpcloud/tail"
 	"github.com/satyrius/gonx"
 	"github.com/prometheus/client_golang/prometheus"
@@ -25,29 +41,31 @@ type Metrics struct {
 }
 
 func (m *Metrics) Init(opts *StartOptions) {
+	labels := []string{"method", "status"}
+
 	m.countTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: opts.Namespace,
 		Name: "http_response_count_total",
 		Help: "Amount of processed HTTP requests",
-	}, []string{"method"})
+	}, labels)
 
 	m.bytesTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: opts.Namespace,
 		Name: "http_response_size_bytes",
 		Help: "Total amount of transferred bytes",
-	}, []string{"method"})
+	}, labels)
 
 	m.upstreamSeconds = prometheus.NewSummaryVec(prometheus.SummaryOpts{
 		Namespace: opts.Namespace,
 		Name: "http_upstream_time_seconds",
 		Help: "Time needed by upstream servers to handle requests",
-	}, []string{"method"})
+	}, labels)
 
 	m.responseSeconds = prometheus.NewSummaryVec(prometheus.SummaryOpts{
 		Namespace: opts.Namespace,
 		Name: "http_response_time_seconds",
 		Help: "Time needed by NGINX to handle requests",
-	}, []string{"method"})
+	}, labels)
 
 	prometheus.MustRegister(m.countTotal)
 	prometheus.MustRegister(m.bytesTotal)
@@ -81,34 +99,37 @@ func main() {
 
 		go func() {
 			for line := range t.Lines {
-				fmt.Printf("read from %s: %s\n", f, line)
 				entry, err := parser.ParseString(line.Text)
 				if err != nil {
 					fmt.Printf("error while parsing line '%s': %s", line.Text, err)
 					continue
 				}
 
-				var method = "UNKNOWN"
+				method := "UNKNOWN"
+				status := "0"
+
 				if request, err := entry.Field("request"); err == nil {
 					f := strings.Split(request, " ")
 					method = f[0]
 				}
 
-				metrics.countTotal.WithLabelValues(method).Inc()
+				if s, err := entry.Field("status"); err == nil {
+					status = s
+				}
+
+				metrics.countTotal.WithLabelValues(method, status).Inc()
 
 				if bytes, err := entry.FloatField("body_bytes_sent"); err == nil {
-					metrics.bytesTotal.WithLabelValues(method).Add(bytes)
+					metrics.bytesTotal.WithLabelValues(method, status).Add(bytes)
 				}
 
 				if upstreamTime, err := entry.FloatField("upstream_response_time"); err == nil {
-					metrics.upstreamSeconds.WithLabelValues(method).Observe(upstreamTime)
+					metrics.upstreamSeconds.WithLabelValues(method, status).Observe(upstreamTime)
 				}
 
 				if responseTime, err := entry.FloatField("request_time"); err == nil {
-					metrics.responseSeconds.WithLabelValues(method).Observe(responseTime)
+					metrics.responseSeconds.WithLabelValues(method, status).Observe(responseTime)
 				}
-
-				fmt.Println(entry)
 			}
 		}()
 	}
