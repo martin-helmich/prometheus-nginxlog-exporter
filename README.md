@@ -22,6 +22,25 @@ Use the configuration file:
 
     ./nginx-log-exporter -config-file /path/to/config.hcl
 
+Collected metrics
+-----------------
+
+This exporter collects the following metrics. This collector can listen on
+multiple log files at once and publish metrics in different namespaces. Each
+metric uses the labels `method` (containing the HTTP request method) and
+`status` (containing the HTTP status code).
+
+- `<namespace>_http_response_count_total` - The total amount of processed HTTP requests/responses.
+- `<namespace>_http_response_size_bytes` - The total amount of transferred content in bytes.
+- `<namespace>_http_upstream_time_seconds` - A summary vector of the upstream
+  response times in seconds. Logging these needs to be specifically enabled in
+  NGINX using the `$upstream_response_time` variable in the log format.
+- `<namespace>_http_response_time_seconds` - A summary vector of the total
+  response times in seconds. Logging these needs to be specifically enabled in
+  NGINX using the `$request_time` variable in the log format.
+
+Additional labels can be configured in the configuration file (see below).
+
 Configuration file
 ------------------
 
@@ -32,7 +51,7 @@ is expected to be in [HCL](hcl) format. Here's an example file:
       port = 4040
       address = "10.1.2.3"
     }
-    
+
     consul {
       enable = true
       address = "localhost:8500"
