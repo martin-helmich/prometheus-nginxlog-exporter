@@ -3,6 +3,6 @@ go:
   - 1.6
   - 1.7
 install:
-  - pip install --user behave
+  - pip install --user behave requests
 script:
   - behave
