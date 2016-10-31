@@ -38,6 +38,11 @@ is expected to be in [HCL](hcl) format. Here's an example file:
       source_files = [
         "/var/log/nginx/app1/access.log"
       ]
+      labels {
+        app = "application-one"
+        environment = "production"
+        foo = "bar"
+      }
     }
 
     namespace "app-2" {

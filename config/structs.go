@@ -24,7 +24,26 @@ type ListenConfig struct {
 
 // NamespaceConfig is a struct describing single metric namespaces
 type NamespaceConfig struct {
-	Name        string   `hcl:",key"`
-	SourceFiles []string `hcl:"source_files"`
-	Format      string   `hcl:"format"`
+	Name        string            `hcl:",key"`
+	SourceFiles []string          `hcl:"source_files"`
+	Format      string            `hcl:"format"`
+	Labels      map[string]string `hcl:"labels"`
+}
+
+// LabelNames exports the names of all known additional labels
+func (c *NamespaceConfig) LabelNames() []string {
+	keys := make([]string, 0, len(c.Labels))
+	for k := range c.Labels {
+		keys = append(keys, k)
+	}
+	return keys
+}
+
+// LabelValues exports the values of all known additional labels
+func (c *NamespaceConfig) LabelValues() []string {
+	values := make([]string, 0, len(c.Labels))
+	for k := range c.Labels {
+		values = append(values, c.Labels[k])
+	}
+	return values
 }
