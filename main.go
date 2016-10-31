@@ -38,29 +38,29 @@ type Metrics struct {
 }
 
 // Init initializes a metrics struct
-func (m *Metrics) Init(opts *config.StartupFlags) {
+func (m *Metrics) Init(cfg *config.NamespaceConfig) {
 	labels := []string{"method", "status"}
 
 	m.countTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Namespace: opts.Namespace,
+		Namespace: cfg.Name,
 		Name:      "http_response_count_total",
 		Help:      "Amount of processed HTTP requests",
 	}, labels)
 
 	m.bytesTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Namespace: opts.Namespace,
+		Namespace: cfg.Name,
 		Name:      "http_response_size_bytes",
 		Help:      "Total amount of transferred bytes",
 	}, labels)
 
 	m.upstreamSeconds = prometheus.NewSummaryVec(prometheus.SummaryOpts{
-		Namespace: opts.Namespace,
+		Namespace: cfg.Name,
 		Name:      "http_upstream_time_seconds",
 		Help:      "Time needed by upstream servers to handle requests",
 	}, labels)
 
 	m.responseSeconds = prometheus.NewSummaryVec(prometheus.SummaryOpts{
-		Namespace: opts.Namespace,
+		Namespace: cfg.Name,
 		Name:      "http_response_time_seconds",
 		Help:      "Time needed by NGINX to handle requests",
 	}, labels)
@@ -73,6 +73,9 @@ func (m *Metrics) Init(opts *config.StartupFlags) {
 
 func main() {
 	var opts config.StartupFlags
+	var cfg = config.Config{
+		Port: 4040,
+	}
 
 	flag.IntVar(&opts.ListenPort, "listen-port", 4040, "HTTP port to listen on")
 	flag.StringVar(&opts.Format, "format", `$remote_addr - $remote_user [$time_local] "$request" $status $body_bytes_sent "$http_referer" "$http_user_agent" "$http_x_forwarded_for"`, "NGINX access log format")
@@ -80,65 +83,74 @@ func main() {
 	flag.StringVar(&opts.ConfigFile, "config-file", "", "Configuration file to read from")
 	flag.Parse()
 
+	opts.Filenames = flag.Args()
+
 	if opts.ConfigFile != "" {
-		fmt.Printf("loading configuration file %s", opts.ConfigFile)
-		config, err := config.LoadConfigFromFile(opts.ConfigFile)
-		if err != nil {
+		fmt.Printf("loading configuration file %s\n", opts.ConfigFile)
+		if err := config.LoadConfigFromFile(&cfg, opts.ConfigFile); err != nil {
 			panic(err)
 		}
+	} else if err := config.LoadConfigFromFlags(&cfg, &opts); err != nil {
+		panic(err)
 	}
 
-	opts.Filenames = flag.Args()
-	parser := gonx.NewParser(opts.Format)
+	fmt.Printf("using configuration %s\n", cfg)
 
-	metrics := Metrics{}
-	metrics.Init(&opts)
+	for _, ns := range cfg.Namespaces {
+		fmt.Printf("starting listener for namespace %s\n", ns.Name)
+		go func(nsCfg *config.NamespaceConfig) {
+			parser := gonx.NewParser(nsCfg.Format)
 
-	for _, f := range opts.Filenames {
-		t, err := tail.TailFile(f, tail.Config{
-			Follow: true,
-			ReOpen: true,
-			Poll:   true,
-		})
-		if err != nil {
-			panic(err)
-		}
+			metrics := Metrics{}
+			metrics.Init(nsCfg)
 
-		go func() {
-			for line := range t.Lines {
-				entry, err := parser.ParseString(line.Text)
+			for _, f := range nsCfg.SourceFiles {
+				t, err := tail.TailFile(f, tail.Config{
+					Follow: true,
+					ReOpen: true,
+					Poll:   true,
+				})
 				if err != nil {
-					fmt.Printf("error while parsing line '%s': %s", line.Text, err)
-					continue
+					panic(err)
 				}
 
-				method := "UNKNOWN"
-				status := "0"
+				go func() {
+					for line := range t.Lines {
+						entry, err := parser.ParseString(line.Text)
+						if err != nil {
+							fmt.Printf("error while parsing line '%s': %s", line.Text, err)
+							continue
+						}
 
-				if request, err := entry.Field("request"); err == nil {
-					f := strings.Split(request, " ")
-					method = f[0]
-				}
+						method := "UNKNOWN"
+						status := "0"
 
-				if s, err := entry.Field("status"); err == nil {
-					status = s
-				}
+						if request, err := entry.Field("request"); err == nil {
+							f := strings.Split(request, " ")
+							method = f[0]
+						}
 
-				metrics.countTotal.WithLabelValues(method, status).Inc()
+						if s, err := entry.Field("status"); err == nil {
+							status = s
+						}
 
-				if bytes, err := entry.FloatField("body_bytes_sent"); err == nil {
-					metrics.bytesTotal.WithLabelValues(method, status).Add(bytes)
-				}
+						metrics.countTotal.WithLabelValues(method, status).Inc()
 
-				if upstreamTime, err := entry.FloatField("upstream_response_time"); err == nil {
-					metrics.upstreamSeconds.WithLabelValues(method, status).Observe(upstreamTime)
-				}
+						if bytes, err := entry.FloatField("body_bytes_sent"); err == nil {
+							metrics.bytesTotal.WithLabelValues(method, status).Add(bytes)
+						}
 
-				if responseTime, err := entry.FloatField("request_time"); err == nil {
-					metrics.responseSeconds.WithLabelValues(method, status).Observe(responseTime)
-				}
+						if upstreamTime, err := entry.FloatField("upstream_response_time"); err == nil {
+							metrics.upstreamSeconds.WithLabelValues(method, status).Observe(upstreamTime)
+						}
+
+						if responseTime, err := entry.FloatField("request_time"); err == nil {
+							metrics.responseSeconds.WithLabelValues(method, status).Observe(responseTime)
+						}
+					}
+				}()
 			}
-		}()
+		}(&ns)
 	}
 
 	listenAddr := fmt.Sprintf("%s:%d", "0.0.0.0", opts.ListenPort)

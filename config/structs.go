@@ -11,12 +11,12 @@ type StartupFlags struct {
 }
 
 type Config struct {
-	Port      int
-	Namespace []NamespaceConfig
+	Port       int
+	Namespaces []NamespaceConfig `hcl:"namespace"`
 }
 
 type NamespaceConfig struct {
-	Name       string
-	SourceFile []string
-	Format     string
+	Name        string   `hcl:",key"`
+	SourceFiles []string `hcl:"source_files"`
+	Format      string   `hcl:"format"`
 }
