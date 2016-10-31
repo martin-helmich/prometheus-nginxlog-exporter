@@ -40,6 +40,7 @@ type Metrics struct {
 // Init initializes a metrics struct
 func (m *Metrics) Init(cfg *config.NamespaceConfig) {
 	labels := []string{"method", "status"}
+	labels = append(labels, cfg.LabelNames()...)
 
 	m.countTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: cfg.Name,
@@ -119,6 +120,13 @@ func main() {
 				}
 
 				go func() {
+					staticLabelValues := nsCfg.LabelValues()
+					labelValues := make([]string, len(staticLabelValues)+2)
+
+					for i := range staticLabelValues {
+						labelValues[i+2] = staticLabelValues[i]
+					}
+
 					for line := range t.Lines {
 						entry, err := parser.ParseString(line.Text)
 						if err != nil {
@@ -126,30 +134,30 @@ func main() {
 							continue
 						}
 
-						method := "UNKNOWN"
-						status := "0"
+						labelValues[0] = "UNKNOWN"
+						labelValues[1] = "0"
 
 						if request, err := entry.Field("request"); err == nil {
 							f := strings.Split(request, " ")
-							method = f[0]
+							labelValues[0] = f[0]
 						}
 
 						if s, err := entry.Field("status"); err == nil {
-							status = s
+							labelValues[1] = s
 						}
 
-						metrics.countTotal.WithLabelValues(method, status).Inc()
+						metrics.countTotal.WithLabelValues(labelValues...).Inc()
 
 						if bytes, err := entry.FloatField("body_bytes_sent"); err == nil {
-							metrics.bytesTotal.WithLabelValues(method, status).Add(bytes)
+							metrics.bytesTotal.WithLabelValues(labelValues...).Add(bytes)
 						}
 
 						if upstreamTime, err := entry.FloatField("upstream_response_time"); err == nil {
-							metrics.upstreamSeconds.WithLabelValues(method, status).Observe(upstreamTime)
+							metrics.upstreamSeconds.WithLabelValues(labelValues...).Observe(upstreamTime)
 						}
 
 						if responseTime, err := entry.FloatField("request_time"); err == nil {
-							metrics.responseSeconds.WithLabelValues(method, status).Observe(responseTime)
+							metrics.responseSeconds.WithLabelValues(labelValues...).Observe(responseTime)
 						}
 					}
 				}()
