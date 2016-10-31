@@ -36,6 +36,16 @@ def run_exporter_impl(context, filename, format):
 
     context.process = p
 
+@given(u'a running exporter listening with default configuration file')
+def run_exporter_configfile_impl(context):
+    p = subprocess.Popen([bin_name, '-config-file', 'features/test-configuration.hcl'],
+                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    time.sleep(.5)
+
+    if p.returncode is not None:
+        raise Exception('exporter exited too soon with exit code %d' % p.returncode)
+
+    context.process = p
 
 @when(u'the following HTTP request is logged to "{filename}"')
 @when(u'the following HTTP requests are logged to "{filename}"')
