@@ -23,18 +23,10 @@ import (
 	"strings"
 
 	"github.com/hpcloud/tail"
+	"github.com/martin-helmich/prometheus-nginxlog-exporter/config"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/satyrius/gonx"
 )
-
-// StartOptions is a struct containingn options that can be passed via the
-// command line
-type StartOptions struct {
-	Filenames  []string
-	Format     string
-	Namespace  string
-	ListenPort int
-}
 
 // Metrics is a struct containing pointers to all metrics that should be
 // exposed to Prometheus
@@ -46,7 +38,7 @@ type Metrics struct {
 }
 
 // Init initializes a metrics struct
-func (m *Metrics) Init(opts *StartOptions) {
+func (m *Metrics) Init(opts *config.StartupFlags) {
 	labels := []string{"method", "status"}
 
 	m.countTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
@@ -80,12 +72,21 @@ func (m *Metrics) Init(opts *StartOptions) {
 }
 
 func main() {
-	var opts StartOptions
+	var opts config.StartupFlags
 
 	flag.IntVar(&opts.ListenPort, "listen-port", 4040, "HTTP port to listen on")
 	flag.StringVar(&opts.Format, "format", `$remote_addr - $remote_user [$time_local] "$request" $status $body_bytes_sent "$http_referer" "$http_user_agent" "$http_x_forwarded_for"`, "NGINX access log format")
 	flag.StringVar(&opts.Namespace, "namespace", "nginx", "namespace to use for metric names")
+	flag.StringVar(&opts.ConfigFile, "config-file", "", "Configuration file to read from")
 	flag.Parse()
+
+	if opts.ConfigFile != "" {
+		fmt.Printf("loading configuration file %s", opts.ConfigFile)
+		config, err := config.LoadConfigFromFile(opts.ConfigFile)
+		if err != nil {
+			panic(err)
+		}
+	}
 
 	opts.Filenames = flag.Args()
 	parser := gonx.NewParser(opts.Format)

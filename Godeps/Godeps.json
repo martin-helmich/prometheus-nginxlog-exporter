@@ -1,5 +1,5 @@
 {
-	"ImportPath": "github.com/martin-helmich/nginx-log-exporter",
+	"ImportPath": "github.com/martin-helmich/prometheus-nginxlog-exporter",
 	"GoVersion": "go1.5",
 	"GodepVersion": "v74",
 	"Deps": [
@@ -12,7 +12,63 @@
 			"Rev": "0c1f6d65b5a189c2250d10e71a5506f06f9fa0a0"
 		},
 		{
+			"ImportPath": "github.com/hashicorp/hcl",
+			"Rev": "8fa153c5b4e9d1ccecda7075821ffc7c1f6d912b"
+		},
+		{
+			"ImportPath": "github.com/hashicorp/hcl/hcl/ast",
+			"Rev": "8fa153c5b4e9d1ccecda7075821ffc7c1f6d912b"
+		},
+		{
+			"ImportPath": "github.com/hashicorp/hcl/hcl/parser",
+			"Rev": "8fa153c5b4e9d1ccecda7075821ffc7c1f6d912b"
+		},
+		{
+			"ImportPath": "github.com/hashicorp/hcl/hcl/scanner",
+			"Rev": "8fa153c5b4e9d1ccecda7075821ffc7c1f6d912b"
+		},
+		{
+			"ImportPath": "github.com/hashicorp/hcl/hcl/strconv",
+			"Rev": "8fa153c5b4e9d1ccecda7075821ffc7c1f6d912b"
+		},
+		{
+			"ImportPath": "github.com/hashicorp/hcl/hcl/token",
+			"Rev": "8fa153c5b4e9d1ccecda7075821ffc7c1f6d912b"
+		},
+		{
+			"ImportPath": "github.com/hashicorp/hcl/json/parser",
+			"Rev": "8fa153c5b4e9d1ccecda7075821ffc7c1f6d912b"
+		},
+		{
+			"ImportPath": "github.com/hashicorp/hcl/json/scanner",
+			"Rev": "8fa153c5b4e9d1ccecda7075821ffc7c1f6d912b"
+		},
+		{
+			"ImportPath": "github.com/hashicorp/hcl/json/token",
+			"Rev": "8fa153c5b4e9d1ccecda7075821ffc7c1f6d912b"
+		},
+		{
 			"ImportPath": "github.com/hpcloud/tail",
+			"Comment": "v1.0.0",
+			"Rev": "a30252cb686a21eb2d0b98132633053ec2f7f1e5"
+		},
+		{
+			"ImportPath": "github.com/hpcloud/tail/ratelimiter",
+			"Comment": "v1.0.0",
+			"Rev": "a30252cb686a21eb2d0b98132633053ec2f7f1e5"
+		},
+		{
+			"ImportPath": "github.com/hpcloud/tail/util",
+			"Comment": "v1.0.0",
+			"Rev": "a30252cb686a21eb2d0b98132633053ec2f7f1e5"
+		},
+		{
+			"ImportPath": "github.com/hpcloud/tail/watch",
+			"Comment": "v1.0.0",
+			"Rev": "a30252cb686a21eb2d0b98132633053ec2f7f1e5"
+		},
+		{
+			"ImportPath": "github.com/hpcloud/tail/winfile",
 			"Comment": "v1.0.0",
 			"Rev": "a30252cb686a21eb2d0b98132633053ec2f7f1e5"
 		},
@@ -60,36 +116,6 @@
 		{
 			"ImportPath": "gopkg.in/tomb.v1",
 			"Rev": "dd632973f1e7218eb1089048e0798ec9ae7dceb8"
-		},
-		{
-			"ImportPath": "github.com/hpcloud/tail/ratelimiter",
-			"Comment": "v1.0.0",
-			"Rev": "a30252cb686a21eb2d0b98132633053ec2f7f1e5"
-		},
-		{
-			"ImportPath": "github.com/hpcloud/tail/util",
-			"Comment": "v1.0.0",
-			"Rev": "a30252cb686a21eb2d0b98132633053ec2f7f1e5"
-		},
-		{
-			"ImportPath": "github.com/hpcloud/tail/watch",
-			"Comment": "v1.0.0",
-			"Rev": "a30252cb686a21eb2d0b98132633053ec2f7f1e5"
-		},
-		{
-			"ImportPath": "github.com/hpcloud/tail/winfile",
-			"Comment": "v1.0.0",
-			"Rev": "a30252cb686a21eb2d0b98132633053ec2f7f1e5"
-		},
-		{
-			"ImportPath": "github.com/hpcloud/tail/vendor/gopkg.in/tomb.v1",
-			"Comment": "v1.0.0",
-			"Rev": "a30252cb686a21eb2d0b98132633053ec2f7f1e5"
-		},
-		{
-			"ImportPath": "github.com/hpcloud/tail/vendor/gopkg.in/fsnotify.v1",
-			"Comment": "v1.0.0",
-			"Rev": "a30252cb686a21eb2d0b98132633053ec2f7f1e5"
 		}
 	]
 }
