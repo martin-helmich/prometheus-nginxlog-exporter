@@ -36,9 +36,9 @@ def run_exporter_impl(context, filename, format):
 
     context.process = p
 
-@given(u'a running exporter listening with default configuration file')
-def run_exporter_configfile_impl(context):
-    p = subprocess.Popen([bin_name, '-config-file', 'features/test-configuration.hcl'],
+@given(u'a running exporter listening with configuration file "{config}"')
+def run_exporter_configfile_impl(context, config):
+    p = subprocess.Popen([bin_name, '-config-file', 'features/%s' % config],
                          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     time.sleep(.5)
 
