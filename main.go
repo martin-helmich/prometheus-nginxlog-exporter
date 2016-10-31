@@ -19,13 +19,16 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/hpcloud/tail"
-	"github.com/satyrius/gonx"
-	"github.com/prometheus/client_golang/prometheus"
 	"net/http"
 	"strings"
+
+	"github.com/hpcloud/tail"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/satyrius/gonx"
 )
 
+// StartOptions is a struct containingn options that can be passed via the
+// command line
 type StartOptions struct {
 	Filenames  []string
 	Format     string
@@ -33,6 +36,8 @@ type StartOptions struct {
 	ListenPort int
 }
 
+// Metrics is a struct containing pointers to all metrics that should be
+// exposed to Prometheus
 type Metrics struct {
 	countTotal      *prometheus.CounterVec
 	bytesTotal      *prometheus.CounterVec
@@ -40,31 +45,32 @@ type Metrics struct {
 	responseSeconds *prometheus.SummaryVec
 }
 
+// Init initializes a metrics struct
 func (m *Metrics) Init(opts *StartOptions) {
 	labels := []string{"method", "status"}
 
 	m.countTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: opts.Namespace,
-		Name: "http_response_count_total",
-		Help: "Amount of processed HTTP requests",
+		Name:      "http_response_count_total",
+		Help:      "Amount of processed HTTP requests",
 	}, labels)
 
 	m.bytesTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: opts.Namespace,
-		Name: "http_response_size_bytes",
-		Help: "Total amount of transferred bytes",
+		Name:      "http_response_size_bytes",
+		Help:      "Total amount of transferred bytes",
 	}, labels)
 
 	m.upstreamSeconds = prometheus.NewSummaryVec(prometheus.SummaryOpts{
 		Namespace: opts.Namespace,
-		Name: "http_upstream_time_seconds",
-		Help: "Time needed by upstream servers to handle requests",
+		Name:      "http_upstream_time_seconds",
+		Help:      "Time needed by upstream servers to handle requests",
 	}, labels)
 
 	m.responseSeconds = prometheus.NewSummaryVec(prometheus.SummaryOpts{
 		Namespace: opts.Namespace,
-		Name: "http_response_time_seconds",
-		Help: "Time needed by NGINX to handle requests",
+		Name:      "http_response_time_seconds",
+		Help:      "Time needed by NGINX to handle requests",
 	}, labels)
 
 	prometheus.MustRegister(m.countTotal)
@@ -76,9 +82,9 @@ func (m *Metrics) Init(opts *StartOptions) {
 func main() {
 	var opts StartOptions
 
-	flag.IntVar(&opts.ListenPort, "listen-port", 4040, "HTTP port to listen on")
-	flag.StringVar(&opts.Format, "format", `$remote_addr - $remote_user [$time_local] "$request" $status $body_bytes_sent "$http_referer" "$http_user_agent" "$http_x_forwarded_for"`, "NGINX access log format")
-	flag.StringVar(&opts.Namespace, "namespace", "nginx", "namespace to use for metric names")
+	flag.IntVar(&opts.ListenPort, "-listen-port", 4040, "HTTP port to listen on")
+	flag.StringVar(&opts.Format, "-format", `$remote_addr - $remote_user [$time_local] "$request" $status $body_bytes_sent "$http_referer" "$http_user_agent" "$http_x_forwarded_for"`, "NGINX access log format")
+	flag.StringVar(&opts.Namespace, "-namespace", "nginx", "namespace to use for metric names")
 	flag.Parse()
 
 	opts.Filenames = flag.Args()
@@ -91,7 +97,7 @@ func main() {
 		t, err := tail.TailFile(f, tail.Config{
 			Follow: true,
 			ReOpen: true,
-			Poll: true,
+			Poll:   true,
 		})
 		if err != nil {
 			panic(err)
