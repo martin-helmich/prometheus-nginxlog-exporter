@@ -102,11 +102,11 @@ func main() {
 	for _, ns := range cfg.Namespaces {
 		fmt.Printf("starting listener for namespace %s\n", ns.Name)
 
-		go func(nsCfg *config.NamespaceConfig) {
+		go func(nsCfg config.NamespaceConfig) {
 			parser := gonx.NewParser(nsCfg.Format)
 
 			metrics := Metrics{}
-			metrics.Init(nsCfg)
+			metrics.Init(&nsCfg)
 
 			for _, f := range nsCfg.SourceFiles {
 				t, err := tail.TailFile(f, tail.Config{
@@ -154,7 +154,7 @@ func main() {
 					}
 				}()
 			}
-		}(&ns)
+		}(ns)
 	}
 
 	listenAddr := fmt.Sprintf("%s:%d", cfg.Listen.Address, cfg.Listen.Port)
