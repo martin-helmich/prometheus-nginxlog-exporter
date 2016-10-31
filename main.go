@@ -82,9 +82,9 @@ func (m *Metrics) Init(opts *StartOptions) {
 func main() {
 	var opts StartOptions
 
-	flag.IntVar(&opts.ListenPort, "-listen-port", 4040, "HTTP port to listen on")
-	flag.StringVar(&opts.Format, "-format", `$remote_addr - $remote_user [$time_local] "$request" $status $body_bytes_sent "$http_referer" "$http_user_agent" "$http_x_forwarded_for"`, "NGINX access log format")
-	flag.StringVar(&opts.Namespace, "-namespace", "nginx", "namespace to use for metric names")
+	flag.IntVar(&opts.ListenPort, "listen-port", 4040, "HTTP port to listen on")
+	flag.StringVar(&opts.Format, "format", `$remote_addr - $remote_user [$time_local] "$request" $status $body_bytes_sent "$http_referer" "$http_user_agent" "$http_x_forwarded_for"`, "NGINX access log format")
+	flag.StringVar(&opts.Namespace, "namespace", "nginx", "namespace to use for metric names")
 	flag.Parse()
 
 	opts.Filenames = flag.Args()

@@ -8,11 +8,13 @@ formats = {
     "upstream-time": '$remote_addr - $remote_user [$time_local] "$request" $status $body_bytes_sent "$http_referer" "$http_user_agent" "$http_x_forwarded_for" $upstream_response_time'
 }
 
+bin_name = './prometheus-nginxlog-exporter'
+
 
 @given('a running exporter listening on "{filename}" with format')
 def run_exporter_impl(context, filename):
     filename = '.behave-sandbox/%s' % filename
-    p = subprocess.Popen(['./nginx-log-exporter', '--format', context.text, filename],
+    p = subprocess.Popen([bin_name, '--format', context.text, filename],
                          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     time.sleep(.5)
 
@@ -25,7 +27,7 @@ def run_exporter_impl(context, filename):
 @given('a running exporter listening on "{filename}" with {format} format')
 def run_exporter_impl(context, filename, format):
     filename = '.behave-sandbox/%s' % filename
-    p = subprocess.Popen(['./nginx-log-exporter', '--format', formats[format], filename],
+    p = subprocess.Popen([bin_name, '--format', formats[format], filename],
                          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     time.sleep(.5)
 
@@ -41,6 +43,7 @@ def step_impl(context, filename):
     filename = '.behave-sandbox/%s' % filename
     with open(filename, 'a') as f:
         f.write("%s\n" % context.text)
+    time.sleep(.5)
 
 
 @then(u'the exporter should report value {val} for metric {metric}')
