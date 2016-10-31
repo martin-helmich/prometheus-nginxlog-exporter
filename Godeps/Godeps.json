@@ -12,6 +12,11 @@
 			"Rev": "0c1f6d65b5a189c2250d10e71a5506f06f9fa0a0"
 		},
 		{
+			"ImportPath": "github.com/hashicorp/consul/api",
+			"Comment": "v0.5.2-313-gde08067",
+			"Rev": "de080672fee9e6104572eeea89eccdca135bb918"
+		},
+		{
 			"ImportPath": "github.com/hashicorp/hcl",
 			"Rev": "8fa153c5b4e9d1ccecda7075821ffc7c1f6d912b"
 		},
