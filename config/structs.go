@@ -24,7 +24,8 @@ type ListenConfig struct {
 
 // NamespaceConfig is a struct describing single metric namespaces
 type NamespaceConfig struct {
-	Name        string   `hcl:",key"`
-	SourceFiles []string `hcl:"source_files"`
-	Format      string   `hcl:"format"`
+	Name        string            `hcl:",key"`
+	SourceFiles []string          `hcl:"source_files"`
+	Format      string            `hcl:"format"`
+	Labels      map[string]string `hcl:"labels"`
 }
