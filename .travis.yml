@@ -16,3 +16,4 @@ deploy:
   on:
     repo: martin-helmich/prometheus-nginxlog-exporter
     tags: true
+    go: 1.7
