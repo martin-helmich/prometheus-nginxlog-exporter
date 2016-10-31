@@ -26,7 +26,10 @@ func LoadConfigFromFile(config *Config, filename string) error {
 }
 
 func LoadConfigFromFlags(config *Config, flags *StartupFlags) error {
-	config.Port = flags.ListenPort
+	config.Listen = ListenConfig{
+		Port:    flags.ListenPort,
+		Address: "0.0.0.0",
+	}
 	config.Namespaces = []NamespaceConfig{
 		NamespaceConfig{
 			Format:      flags.Format,

@@ -11,8 +11,13 @@ type StartupFlags struct {
 }
 
 type Config struct {
-	Port       int
+	Listen     ListenConfig
 	Namespaces []NamespaceConfig `hcl:"namespace"`
+}
+
+type ListenConfig struct {
+	Port    int
+	Address string
 }
 
 type NamespaceConfig struct {

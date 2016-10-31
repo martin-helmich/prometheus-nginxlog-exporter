@@ -74,7 +74,10 @@ func (m *Metrics) Init(cfg *config.NamespaceConfig) {
 func main() {
 	var opts config.StartupFlags
 	var cfg = config.Config{
-		Port: 4040,
+		Listen: config.ListenConfig{
+			Port:    4040,
+			Address: "0.0.0.0",
+		},
 	}
 
 	flag.IntVar(&opts.ListenPort, "listen-port", 4040, "HTTP port to listen on")
@@ -154,7 +157,7 @@ func main() {
 		}(&ns)
 	}
 
-	listenAddr := fmt.Sprintf("%s:%d", "0.0.0.0", opts.ListenPort)
+	listenAddr := fmt.Sprintf("%s:%d", cfg.Listen.Address, cfg.Listen.Port)
 	fmt.Printf("running HTTP server on address %s\n", listenAddr)
 
 	http.Handle("/metrics", prometheus.Handler())
