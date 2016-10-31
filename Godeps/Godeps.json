@@ -109,6 +109,10 @@
 			"Rev": "71c9c5956b05290346eb980b79b9beb9db036803"
 		},
 		{
+			"ImportPath": "golang.org/x/sys/unix",
+			"Rev": "c200b10b5d5e122be351b67af224adc6128af5bf"
+		},
+		{
 			"ImportPath": "gopkg.in/fsnotify.v1",
 			"Comment": "v1.3.0",
 			"Rev": "30411dbcefb7a1da7e84f75530ad3abe4011b4f8"
