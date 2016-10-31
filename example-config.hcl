@@ -1,4 +1,19 @@
-port = 4040
+listen {
+  port = 4040
+}
+
+consul {
+  enable = true
+  address = "localhost:8500"
+  service {
+    id = "nginx-exporter"
+    name = "nginx-exporter"
+    datacenter = "dc1"
+    scheme = "http"
+    token = ""
+    tags = ["foo", "bar"]
+  }
+}
 
 namespace "nginx" {
   source_files = [
