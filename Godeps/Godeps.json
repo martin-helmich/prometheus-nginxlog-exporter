@@ -1,6 +1,7 @@
 {
 	"ImportPath": "github.com/martin-helmich/nginx-log-exporter",
 	"GoVersion": "go1.5",
+	"GodepVersion": "v74",
 	"Deps": [
 		{
 			"ImportPath": "github.com/beorn7/perks/quantile",
@@ -59,6 +60,36 @@
 		{
 			"ImportPath": "gopkg.in/tomb.v1",
 			"Rev": "dd632973f1e7218eb1089048e0798ec9ae7dceb8"
+		},
+		{
+			"ImportPath": "github.com/hpcloud/tail/ratelimiter",
+			"Comment": "v1.0.0",
+			"Rev": "a30252cb686a21eb2d0b98132633053ec2f7f1e5"
+		},
+		{
+			"ImportPath": "github.com/hpcloud/tail/util",
+			"Comment": "v1.0.0",
+			"Rev": "a30252cb686a21eb2d0b98132633053ec2f7f1e5"
+		},
+		{
+			"ImportPath": "github.com/hpcloud/tail/watch",
+			"Comment": "v1.0.0",
+			"Rev": "a30252cb686a21eb2d0b98132633053ec2f7f1e5"
+		},
+		{
+			"ImportPath": "github.com/hpcloud/tail/winfile",
+			"Comment": "v1.0.0",
+			"Rev": "a30252cb686a21eb2d0b98132633053ec2f7f1e5"
+		},
+		{
+			"ImportPath": "github.com/hpcloud/tail/vendor/gopkg.in/tomb.v1",
+			"Comment": "v1.0.0",
+			"Rev": "a30252cb686a21eb2d0b98132633053ec2f7f1e5"
+		},
+		{
+			"ImportPath": "github.com/hpcloud/tail/vendor/gopkg.in/fsnotify.v1",
+			"Comment": "v1.0.0",
+			"Rev": "a30252cb686a21eb2d0b98132633053ec2f7f1e5"
 		}
 	]
 }
