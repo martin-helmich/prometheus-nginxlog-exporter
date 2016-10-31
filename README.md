@@ -32,6 +32,19 @@ is expected to be in [HCL](hcl) format. Here's an example file:
       port = 4040
       address = "10.1.2.3"
     }
+    
+    consul {
+      enable = true
+      address = "localhost:8500"
+      service {
+        id = "nginx-exporter"
+        name = "nginx-exporter"
+        datacenter = "dc1"
+        scheme = "http"
+        token = ""
+        tags = ["foo", "bar"]
+      }
+    }
 
     namespace "app-1" {
       format = "$remote_addr - $remote_user [$time_local] \"$request\" $status $body_bytes_sent \"$http_referer\" \"$http_user_agent\" \"$http_x_forwarded_for\""

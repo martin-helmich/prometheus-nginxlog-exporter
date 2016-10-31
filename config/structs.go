@@ -13,6 +13,7 @@ type StartupFlags struct {
 // Config models the application's configuration
 type Config struct {
 	Listen     ListenConfig
+	Consul     ConsulConfig
 	Namespaces []NamespaceConfig `hcl:"namespace"`
 }
 
@@ -20,6 +21,21 @@ type Config struct {
 type ListenConfig struct {
 	Port    int
 	Address string
+}
+
+type ConsulConfig struct {
+	Enable     bool
+	Address    string
+	Datacenter string
+	Scheme     string
+	Token      string
+	Service    ConsulServiceConfig
+}
+
+type ConsulServiceConfig struct {
+	ID   string
+	Name string
+	Tags []string
 }
 
 // NamespaceConfig is a struct describing single metric namespaces

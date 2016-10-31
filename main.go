@@ -20,10 +20,14 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
+	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 
 	"github.com/hpcloud/tail"
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/config"
+	"github.com/martin-helmich/prometheus-nginxlog-exporter/discovery"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/satyrius/gonx"
 )
@@ -99,6 +103,28 @@ func main() {
 	}
 
 	fmt.Printf("using configuration %s\n", cfg)
+
+	if cfg.Consul.Enable {
+		registrator, err := discovery.NewConsulRegistrator(&cfg)
+		if err != nil {
+			panic(err)
+		}
+
+		fmt.Printf("registering service in Consul\n")
+		if err := registrator.RegisterConsul(); err != nil {
+			panic(err)
+		}
+
+		exitChan := make(chan os.Signal, 1)
+		signal.Notify(exitChan, os.Interrupt, syscall.SIGTERM)
+
+		go func() {
+			<-exitChan
+			fmt.Printf("unregistering service in Consul\n")
+			registrator.UnregisterConsul()
+			os.Exit(0)
+		}()
+	}
 
 	for _, ns := range cfg.Namespaces {
 		fmt.Printf("starting listener for namespace %s\n", ns.Name)
