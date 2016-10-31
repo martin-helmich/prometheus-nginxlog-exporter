@@ -5,4 +5,5 @@ go:
 install:
   - pip install --user behave requests
 script:
+  - go build .
   - behave
