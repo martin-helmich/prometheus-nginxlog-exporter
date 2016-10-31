@@ -98,6 +98,7 @@ func main() {
 
 	for _, ns := range cfg.Namespaces {
 		fmt.Printf("starting listener for namespace %s\n", ns.Name)
+
 		go func(nsCfg *config.NamespaceConfig) {
 			parser := gonx.NewParser(nsCfg.Format)
 
@@ -154,6 +155,7 @@ func main() {
 	}
 
 	listenAddr := fmt.Sprintf("%s:%d", "0.0.0.0", opts.ListenPort)
+	fmt.Printf("running HTTP server on address %s\n", listenAddr)
 
 	http.Handle("/metrics", prometheus.Handler())
 	http.ListenAndServe(listenAddr, nil)
