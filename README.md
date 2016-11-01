@@ -97,6 +97,8 @@ You can find an example unit file for this service [in this repository](systemd/
     $ systemctl enable prometheus-nginxlog-exporter
     $ systemctl start prometheus-nginxlog-exporter
 
+The shipped unit file expects the binary to be located in `/usr/local/bin/prometheus-nginxlog-exporter` and the configuration file in `/etc/prometheus-nginxlog-exporter.hcl`. Adjust to your own needs.
+
 Credits
 -------
 
