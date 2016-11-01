@@ -86,6 +86,19 @@ namespace "app-2" {
 }
 ```
 
+Running the collector
+---------------------
+
+### Systemd
+
+You can find an example unit file for this service [in this repository](systemd/prometheus-nginxlog-exporter.service). Simply copy the unit file to `/etc/systemd/system`:
+
+    $ wget -O /etc/systemd/system/prometheus-nginxlog-exporter.service https://raw.githubusercontent.com/martin-helmich/prometheus-nginxlog-exporter/master/systemd/prometheus-nginxlog-exporter.service
+    $ systemctl enable prometheus-nginxlog-exporter
+    $ systemctl start prometheus-nginxlog-exporter
+
+The shipped unit file expects the binary to be located in `/usr/local/bin/prometheus-nginxlog-exporter` and the configuration file in `/etc/prometheus-nginxlog-exporter.hcl`. Adjust to your own needs.
+
 Credits
 -------
 

@@ -1,0 +1,12 @@
+[Unit]
+Description=NGINX metrics exporter for Prometheus
+After=network-online.target
+
+[Service]
+ExecStart=/usr/local/bin/prometheus-nginxlog-exporter -config-file /etc/prometheus-nginxlog-exporter.hcl
+Restart=always
+ProtectSystem=full
+CapabilityBoundingSet=
+
+[Install]
+WantedBy=multi-user.target
