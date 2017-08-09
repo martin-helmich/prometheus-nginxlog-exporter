@@ -1,5 +1,9 @@
 package config
 
+import (
+	"sort"
+)
+
 // StartupFlags is a struct containing options that can be passed via the
 // command line
 type StartupFlags struct {
@@ -44,22 +48,26 @@ type NamespaceConfig struct {
 	SourceFiles []string          `hcl:"source_files"`
 	Format      string            `hcl:"format"`
 	Labels      map[string]string `hcl:"labels"`
+
+	OrderedLabelNames  []string
+	OrderedLabelValues []string
 }
 
-// LabelNames exports the names of all known additional labels
-func (c *NamespaceConfig) LabelNames() []string {
+// OrderLabels builds two lists of label keys and values, ordered by label name
+func (c *NamespaceConfig) OrderLabels() {
 	keys := make([]string, 0, len(c.Labels))
+	values := make([]string, len(c.Labels))
+
 	for k := range c.Labels {
 		keys = append(keys, k)
 	}
-	return keys
-}
 
-// LabelValues exports the values of all known additional labels
-func (c *NamespaceConfig) LabelValues() []string {
-	values := make([]string, 0, len(c.Labels))
-	for k := range c.Labels {
-		values = append(values, c.Labels[k])
+	sort.Strings(keys)
+
+	for i, k := range keys {
+		values[i] = c.Labels[k]
 	}
-	return values
+
+	c.OrderedLabelNames = keys
+	c.OrderedLabelValues = values
 }

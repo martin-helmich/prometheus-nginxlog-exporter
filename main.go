@@ -43,8 +43,10 @@ type Metrics struct {
 
 // Init initializes a metrics struct
 func (m *Metrics) Init(cfg *config.NamespaceConfig) {
+	cfg.OrderLabels()
+
 	labels := []string{"method", "status"}
-	labels = append(labels, cfg.LabelNames()...)
+	labels = append(labels, cfg.OrderedLabelNames...)
 
 	m.countTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: cfg.Name,
@@ -146,7 +148,7 @@ func main() {
 				}
 
 				go func(nsCfg config.NamespaceConfig) {
-					staticLabelValues := nsCfg.LabelValues()
+					staticLabelValues := nsCfg.OrderedLabelValues
 					labelValues := make([]string, len(staticLabelValues)+2)
 
 					for i := range staticLabelValues {
