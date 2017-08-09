@@ -145,7 +145,7 @@ func main() {
 					panic(err)
 				}
 
-				go func() {
+				go func(nsCfg config.NamespaceConfig) {
 					staticLabelValues := nsCfg.LabelValues()
 					labelValues := make([]string, len(staticLabelValues)+2)
 
@@ -186,7 +186,7 @@ func main() {
 							metrics.responseSeconds.WithLabelValues(labelValues...).Observe(responseTime)
 						}
 					}
-				}()
+				}(nsCfg)
 			}
 		}(ns)
 	}
