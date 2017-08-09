@@ -58,8 +58,13 @@ def step_impl(context, filename):
 
 @then(u'the exporter should report value {val} for metric {metric}')
 def step_impl(context, val, metric):
-    response = requests.get('http://localhost:4040/metrics')
-    text = response.text
+    while True:
+        try:
+            response = requests.get('http://localhost:4040/metrics')
+            text = response.text
+            break
+        except request.ConnectionError:
+            continue
 
     lines = [l.strip("\n") for l in text.split("\n")]
     if not "%s %s" % (metric, val) in lines:
