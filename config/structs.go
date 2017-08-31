@@ -1,6 +1,7 @@
 package config
 
 import (
+	"regexp"
 	"sort"
 )
 
@@ -48,9 +49,38 @@ type NamespaceConfig struct {
 	SourceFiles []string          `hcl:"source_files"`
 	Format      string            `hcl:"format"`
 	Labels      map[string]string `hcl:"labels"`
+	Routes      []string          `hcl:"routes"`
 
 	OrderedLabelNames  []string
 	OrderedLabelValues []string
+
+	CompiledRouteRegexps []*regexp.Regexp
+}
+
+func (c *NamespaceConfig) MustCompileRouteRegexps() {
+	err := c.CompileRouteRegexps()
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (c *NamespaceConfig) CompileRouteRegexps() error {
+	c.CompiledRouteRegexps = make([]*regexp.Regexp, len(c.Routes))
+
+	for i, e := range c.Routes {
+		r, err := regexp.Compile(e)
+		if err != nil {
+			return err
+		}
+
+		c.CompiledRouteRegexps[i] = r
+	}
+
+	return nil
+}
+
+func (c *NamespaceConfig) HasRouteMatchers() bool {
+	return len(c.Routes) > 0
 }
 
 // OrderLabels builds two lists of label keys and values, ordered by label name

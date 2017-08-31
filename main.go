@@ -44,8 +44,16 @@ type Metrics struct {
 // Init initializes a metrics struct
 func (m *Metrics) Init(cfg *config.NamespaceConfig) {
 	cfg.OrderLabels()
+	cfg.MustCompileRouteRegexps()
 
 	labels := []string{"method", "status"}
+
+	//fmt.Println("ROUTES: ", cfg.Routes, len(cfg.Routes))
+
+	if cfg.HasRouteMatchers() {
+		labels = append(labels, "request_uri")
+	}
+
 	labels = append(labels, cfg.OrderedLabelNames...)
 
 	m.countTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
@@ -149,10 +157,16 @@ func main() {
 
 				go func(nsCfg config.NamespaceConfig) {
 					staticLabelValues := nsCfg.OrderedLabelValues
-					labelValues := make([]string, len(staticLabelValues)+2)
+					intrinsicLabelCount := 2
+
+					if nsCfg.HasRouteMatchers() {
+						intrinsicLabelCount++
+					}
+
+					labelValues := make([]string, len(staticLabelValues)+intrinsicLabelCount)
 
 					for i := range staticLabelValues {
-						labelValues[i+2] = staticLabelValues[i]
+						labelValues[i+intrinsicLabelCount] = staticLabelValues[i]
 					}
 
 					for line := range t.Lines {
@@ -168,6 +182,17 @@ func main() {
 						if request, err := entry.Field("request"); err == nil {
 							f := strings.Split(request, " ")
 							labelValues[0] = f[0]
+
+							if nsCfg.HasRouteMatchers() {
+								labelValues[2] = ""
+								for i := range nsCfg.CompiledRouteRegexps {
+									match := nsCfg.CompiledRouteRegexps[i].MatchString(f[1])
+									if match {
+										labelValues[2] = nsCfg.Routes[i]
+										break
+									}
+								}
+							}
 						}
 
 						if s, err := entry.Field("status"); err == nil {
