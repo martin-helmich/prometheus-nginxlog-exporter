@@ -25,4 +25,7 @@ namespace "nginx" {
     app = "magicapp"
     foo = "bar"
   }
+  routes = [
+    "^/users/[0-9]+"
+  ]
 }
