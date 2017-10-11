@@ -8,7 +8,7 @@ Usage
 -----
 
 You can either use a simple configuration, using command-line flags, or create
-a configuration file with a more advanced configration.
+a configuration file with a more advanced configuration.
 
 Use the command-line:
 
