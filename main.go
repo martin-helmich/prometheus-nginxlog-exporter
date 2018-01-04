@@ -45,18 +45,19 @@ type Metrics struct {
 
 // Init initializes a metrics struct
 func (m *Metrics) Init(cfg *config.NamespaceConfig) {
-	cfg.OrderLabels()
-	cfg.MustCompileRouteRegexps()
+	cfg.MustCompile()
 
 	labels := []string{"method", "status"}
-
-	//fmt.Println("ROUTES: ", cfg.Routes, len(cfg.Routes))
 
 	if cfg.HasRouteMatchers() {
 		labels = append(labels, "request_uri")
 	}
 
 	labels = append(labels, cfg.OrderedLabelNames...)
+
+	for i := range cfg.RelabelConfigs {
+		labels = append(labels, cfg.RelabelConfigs[i].TargetLabel)
+	}
 
 	m.countTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: cfg.Name,
@@ -187,7 +188,9 @@ func main() {
 						intrinsicLabelCount++
 					}
 
-					labelValues := make([]string, len(staticLabelValues)+intrinsicLabelCount)
+					totalLabelCount := len(staticLabelValues) + intrinsicLabelCount + len(nsCfg.RelabelConfigs)
+					relabelLabelOffset := len(staticLabelValues) + intrinsicLabelCount
+					labelValues := make([]string, totalLabelCount)
 
 					for i := range staticLabelValues {
 						labelValues[i+intrinsicLabelCount] = staticLabelValues[i]
@@ -221,6 +224,19 @@ func main() {
 
 						if s, err := entry.Field("status"); err == nil {
 							labelValues[1] = s
+						}
+
+						for i := range nsCfg.RelabelConfigs {
+							c := &nsCfg.RelabelConfigs[i]
+							if str, err := entry.Field(c.SourceValue); err == nil {
+								if _, ok := c.WhitelistMap[str]; c.WhitelistExists && !ok {
+									str = "other"
+								}
+
+								labelValues[i + relabelLabelOffset] = str
+							} else {
+								labelValues[i + relabelLabelOffset] = ""
+							}
 						}
 
 						metrics.countTotal.WithLabelValues(labelValues...).Inc()
