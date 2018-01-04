@@ -1,7 +1,6 @@
 package config
 
 import (
-	"regexp"
 	"sort"
 	"errors"
 )
@@ -12,20 +11,13 @@ type NamespaceConfig struct {
 	SourceFiles    []string          `hcl:"source_files"`
 	Format         string            `hcl:"format"`
 	Labels         map[string]string `hcl:"labels"`
-	Routes         []string          `hcl:"routes"`
 	RelabelConfigs []RelabelConfig   `hcl:"relabel"`
 
 	OrderedLabelNames  []string
 	OrderedLabelValues []string
-
-	CompiledRouteRegexps []*regexp.Regexp
 }
 
 func (c *NamespaceConfig) StabilityWarnings() error {
-	if len(c.Routes) > 0 {
-		return errors.New("you are using the 'routes' configuration parameter")
-	}
-
 	if len(c.RelabelConfigs) > 0 {
 		return errors.New("you are using the 'relabel' configuration parameter")
 	}
@@ -40,25 +32,6 @@ func (c *NamespaceConfig) MustCompile() {
 	}
 }
 
-func (c *NamespaceConfig) CompileRouteRegexps() error {
-	c.CompiledRouteRegexps = make([]*regexp.Regexp, len(c.Routes))
-
-	for i, e := range c.Routes {
-		r, err := regexp.Compile(e)
-		if err != nil {
-			return err
-		}
-
-		c.CompiledRouteRegexps[i] = r
-	}
-
-	return nil
-}
-
-func (c *NamespaceConfig) HasRouteMatchers() bool {
-	return len(c.Routes) > 0
-}
-
 func (c *NamespaceConfig) Compile() error {
 	for i := range c.RelabelConfigs {
 		if err := c.RelabelConfigs[i].Compile(); err != nil {
@@ -68,7 +41,7 @@ func (c *NamespaceConfig) Compile() error {
 
 	c.OrderLabels()
 
-	return c.CompileRouteRegexps()
+	return nil
 }
 
 // OrderLabels builds two lists of label keys and values, ordered by label name

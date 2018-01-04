@@ -22,7 +22,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 
 	"github.com/hpcloud/tail"
@@ -30,6 +29,8 @@ import (
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/discovery"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/satyrius/gonx"
+	"github.com/martin-helmich/prometheus-nginxlog-exporter/relabeling"
+	"strings"
 )
 
 // Metrics is a struct containing pointers to all metrics that should be
@@ -48,10 +49,6 @@ func (m *Metrics) Init(cfg *config.NamespaceConfig) {
 	cfg.MustCompile()
 
 	labels := []string{"method", "status"}
-
-	if cfg.HasRouteMatchers() {
-		labels = append(labels, "request_uri")
-	}
 
 	labels = append(labels, cfg.OrderedLabelNames...)
 
@@ -181,12 +178,9 @@ func main() {
 				}
 
 				go func(nsCfg config.NamespaceConfig) {
+					relabelings := relabeling.NewRelabelings(nsCfg.RelabelConfigs)
 					staticLabelValues := nsCfg.OrderedLabelValues
 					intrinsicLabelCount := 2
-
-					if nsCfg.HasRouteMatchers() {
-						intrinsicLabelCount++
-					}
 
 					totalLabelCount := len(staticLabelValues) + intrinsicLabelCount + len(nsCfg.RelabelConfigs)
 					relabelLabelOffset := len(staticLabelValues) + intrinsicLabelCount
@@ -209,33 +203,18 @@ func main() {
 						if request, err := entry.Field("request"); err == nil {
 							f := strings.Split(request, " ")
 							labelValues[0] = f[0]
-
-							if nsCfg.HasRouteMatchers() {
-								labelValues[2] = ""
-								for i := range nsCfg.CompiledRouteRegexps {
-									match := nsCfg.CompiledRouteRegexps[i].MatchString(f[1])
-									if match {
-										labelValues[2] = nsCfg.Routes[i]
-										break
-									}
-								}
-							}
 						}
 
 						if s, err := entry.Field("status"); err == nil {
 							labelValues[1] = s
 						}
 
-						for i := range nsCfg.RelabelConfigs {
-							c := &nsCfg.RelabelConfigs[i]
-							if str, err := entry.Field(c.SourceValue); err == nil {
-								if _, ok := c.WhitelistMap[str]; c.WhitelistExists && !ok {
-									str = "other"
+						for i := range relabelings {
+							if str, err := entry.Field(relabelings[i].SourceValue); err == nil {
+								mapped, err := relabelings[i].Map(str)
+								if err == nil {
+									labelValues[i + relabelLabelOffset] = mapped
 								}
-
-								labelValues[i + relabelLabelOffset] = str
-							} else {
-								labelValues[i + relabelLabelOffset] = ""
 							}
 						}
 

@@ -30,6 +30,6 @@ Feature: Config file allows custom labels
       172.17.0.1 - - [23/Jun/2016:16:04:20 +0000] "GET /profile HTTP/1.1" 200 612 "-" "curl/7.29.0" "-"
       172.17.0.1 - - [23/Jun/2016:16:04:20 +0000] "GET /foo HTTP/1.1" 200 612 "-" "curl/7.29.0" "-"
       """
-    Then the exporter should report value 2 for metric nginx_http_response_count_total{method="GET",request_uri="^/users/[0-9]+",status="200"}
-    And the exporter should report value 1 for metric nginx_http_response_count_total{method="GET",request_uri="^/profile",status="200"}
+    Then the exporter should report value 2 for metric nginx_http_response_count_total{method="GET",request_uri="/users/:id",status="200"}
+    And the exporter should report value 1 for metric nginx_http_response_count_total{method="GET",request_uri="/profile",status="200"}
     And the exporter should report value 1 for metric nginx_http_response_count_total{method="GET",request_uri="",status="200"}
