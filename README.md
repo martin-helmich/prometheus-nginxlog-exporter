@@ -95,7 +95,11 @@ to your configuration file.
 
 ### Aggregation by request path
 
-Collecting metrics by the requested resource path has been discussed in #14. Directly adding the requested path as a label is problematic since the set of possible values is infinitely large. For this reason, you can specify a set of `routes` in your configuration file, which is basically a list of regular expressions; if one of these matches a request path, the regular expression will be added as a label to the respective metric:
+Collecting metrics by the requested resource path has been discussed in #14. Directly
+adding the requested path as a label is problematic since the set of possible values is
+infinitely large. For this reason, you can specify a set of `routes` in your
+configuration file, which is basically a list of regular expressions; if one of these matches
+a request path, the regular expression will be added as a label to the respective metric:
 
 ```hcl
 namespace "app-1" {
@@ -109,7 +113,30 @@ namespace "app-1" {
     "^/news"
   ]
 }
-``` 
+```
+
+### Dynamic re-labeling
+
+Re-labeling lets you add arbitrary fields from the parsed log line as labels to your metrics.
+To add a dynamic label, add a `relabel` statement to your configuration file:
+
+```hcl
+namespace "app-1" {
+  // ...
+
+  relabel "host" {
+    from = "server_name"
+    whitelist = [
+      "host-a.com",
+      "host-b.de"
+    ]
+  }
+}
+```
+
+The `whitelist` property is optional; if set, only the supplied values will be added as label.
+All other values will be subsumed under the `"other"` label value. See #16 for a more detailed
+discussion around the reasoning.
 
 Running the collector
 ---------------------
