@@ -32,7 +32,12 @@ namespace "nginx" {
     // whitelist = ["-", "user1", "user2"]
   }
 
-  routes = [
-    "^/users/[0-9]+"
-  ]
+  relabel "request_uri" {
+    from = "request"
+    split = 2
+
+    match "^users/[0-9]+" {
+      replacement = "/users/:id"
+    }
+  }
 }
