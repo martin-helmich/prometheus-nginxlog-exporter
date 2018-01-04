@@ -1,7 +1,6 @@
 language: go
 go:
-- 1.6
-- 1.7
+- 1.9
 install:
 - pip install --user behave requests
 script:
@@ -16,4 +15,4 @@ deploy:
   on:
     repo: martin-helmich/prometheus-nginxlog-exporter
     tags: true
-    go: 1.7
+    go: 1.9
