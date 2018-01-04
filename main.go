@@ -30,7 +30,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/satyrius/gonx"
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/relabeling"
-	"strings"
 )
 
 // Metrics is a struct containing pointers to all metrics that should be
@@ -48,9 +47,11 @@ type Metrics struct {
 func (m *Metrics) Init(cfg *config.NamespaceConfig) {
 	cfg.MustCompile()
 
-	labels := []string{"method", "status"}
+	labels := cfg.OrderedLabelNames
 
-	labels = append(labels, cfg.OrderedLabelNames...)
+	for _, r := range relabeling.DefaultRelabelings {
+		labels = append(labels, r.TargetLabel)
+	}
 
 	for i := range cfg.RelabelConfigs {
 		labels = append(labels, cfg.RelabelConfigs[i].TargetLabel)
@@ -179,15 +180,16 @@ func main() {
 
 				go func(nsCfg config.NamespaceConfig) {
 					relabelings := relabeling.NewRelabelings(nsCfg.RelabelConfigs)
-					staticLabelValues := nsCfg.OrderedLabelValues
-					intrinsicLabelCount := 2
+					relabelings = append(relabeling.DefaultRelabelings, relabelings...)
 
-					totalLabelCount := len(staticLabelValues) + intrinsicLabelCount + len(nsCfg.RelabelConfigs)
-					relabelLabelOffset := len(staticLabelValues) + intrinsicLabelCount
+					staticLabelValues := nsCfg.OrderedLabelValues
+
+					totalLabelCount := len(staticLabelValues) + len(relabelings)
+					relabelLabelOffset := len(staticLabelValues)
 					labelValues := make([]string, totalLabelCount)
 
 					for i := range staticLabelValues {
-						labelValues[i+intrinsicLabelCount] = staticLabelValues[i]
+						labelValues[i] = staticLabelValues[i]
 					}
 
 					for line := range t.Lines {
@@ -195,18 +197,6 @@ func main() {
 						if err != nil {
 							fmt.Printf("error while parsing line '%s': %s", line.Text, err)
 							continue
-						}
-
-						labelValues[0] = "UNKNOWN"
-						labelValues[1] = "0"
-
-						if request, err := entry.Field("request"); err == nil {
-							f := strings.Split(request, " ")
-							labelValues[0] = f[0]
-						}
-
-						if s, err := entry.Field("status"); err == nil {
-							labelValues[1] = s
 						}
 
 						for i := range relabelings {

@@ -6,9 +6,7 @@ type Relabeling struct {
 	config.RelabelConfig
 }
 
-type RelabelingSet []*Relabeling
-
-func NewRelabelings(cfgs []config.RelabelConfig) RelabelingSet {
+func NewRelabelings(cfgs []config.RelabelConfig) []*Relabeling {
 	r := make([]*Relabeling, len(cfgs))
 
 	for i := range cfgs {
