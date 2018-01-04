@@ -86,8 +86,14 @@ namespace "app-2" {
 }
 ```
 
-Aggregation by request path
----------------------------
+Experimental features
+---------------------
+
+The exporter contains features that are currently experimental and may change without prior notice.
+To use these features, either set the `-enable-experimental` flag or add a `enable_experimental` option
+to your configuration file.
+
+### Aggregation by request path
 
 Collecting metrics by the requested resource path has been discussed in #14. Directly adding the requested path as a label is problematic since the set of possible values is infinitely large. For this reason, you can specify a set of `routes` in your configuration file, which is basically a list of regular expressions; if one of these matches a request path, the regular expression will be added as a label to the respective metric:
 
