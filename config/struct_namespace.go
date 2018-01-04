@@ -26,6 +26,10 @@ func (c *NamespaceConfig) StabilityWarnings() error {
 		return errors.New("you are using the 'routes' configuration parameter")
 	}
 
+	if len(c.RelabelConfigs) > 0 {
+		return errors.New("you are using the 'relabel' configuration parameter")
+	}
+
 	return nil
 }
 
