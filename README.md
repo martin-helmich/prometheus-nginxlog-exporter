@@ -86,6 +86,31 @@ namespace "app-2" {
 }
 ```
 
+Experimental features
+---------------------
+
+The exporter contains features that are currently experimental and may change without prior notice.
+To use these features, either set the `-enable-experimental` flag or add a `enable_experimental` option
+to your configuration file.
+
+### Aggregation by request path
+
+Collecting metrics by the requested resource path has been discussed in #14. Directly adding the requested path as a label is problematic since the set of possible values is infinitely large. For this reason, you can specify a set of `routes` in your configuration file, which is basically a list of regular expressions; if one of these matches a request path, the regular expression will be added as a label to the respective metric:
+
+```hcl
+namespace "app-1" {
+  format = "$remote_addr - $remote_user [$time_local] \"$request\" $status $body_bytes_sent \"$http_referer\" \"$http_user_agent\" \"$http_x_forwarded_for\""
+  source_files = [
+    "/var/log/nginx/app1/access.log"
+  ]
+  routes = [
+    "^/users/[0-9]+",
+    "^/profile",
+    "^/news"
+  ]
+}
+``` 
+
 Running the collector
 ---------------------
 

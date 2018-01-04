@@ -46,8 +46,16 @@ type Metrics struct {
 // Init initializes a metrics struct
 func (m *Metrics) Init(cfg *config.NamespaceConfig) {
 	cfg.OrderLabels()
+	cfg.MustCompileRouteRegexps()
 
 	labels := []string{"method", "status"}
+
+	//fmt.Println("ROUTES: ", cfg.Routes, len(cfg.Routes))
+
+	if cfg.HasRouteMatchers() {
+		labels = append(labels, "request_uri")
+	}
+
 	labels = append(labels, cfg.OrderedLabelNames...)
 
 	m.countTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
@@ -107,6 +115,7 @@ func main() {
 	flag.StringVar(&opts.Format, "format", `$remote_addr - $remote_user [$time_local] "$request" $status $body_bytes_sent "$http_referer" "$http_user_agent" "$http_x_forwarded_for"`, "NGINX access log format")
 	flag.StringVar(&opts.Namespace, "namespace", "nginx", "namespace to use for metric names")
 	flag.StringVar(&opts.ConfigFile, "config-file", "", "Configuration file to read from")
+	flag.BoolVar(&opts.EnableExperimentalFeatures, "enable-experimental", false, "Set this flag to enable experimental features")
 	flag.Parse()
 
 	opts.Filenames = flag.Args()
@@ -121,6 +130,13 @@ func main() {
 	}
 
 	fmt.Printf("using configuration %s\n", cfg)
+
+	if stabilityError := cfg.StabilityWarnings(); stabilityError != nil && !opts.EnableExperimentalFeatures {
+		fmt.Fprintf(os.Stderr, "Your configuration file contains an option that is explicitly labeled as experimental feature:\n\n  %s\n\n", stabilityError.Error())
+		fmt.Fprintln(os.Stderr, "Use the -enable-experimental flag or the enable_experimental option to enable these features. Use them at your own peril.")
+
+		os.Exit(1)
+	}
 
 	if cfg.Consul.Enable {
 		registrator, err := discovery.NewConsulRegistrator(&cfg)
@@ -165,10 +181,16 @@ func main() {
 
 				go func(nsCfg config.NamespaceConfig) {
 					staticLabelValues := nsCfg.OrderedLabelValues
-					labelValues := make([]string, len(staticLabelValues)+2)
+					intrinsicLabelCount := 2
+
+					if nsCfg.HasRouteMatchers() {
+						intrinsicLabelCount++
+					}
+
+					labelValues := make([]string, len(staticLabelValues)+intrinsicLabelCount)
 
 					for i := range staticLabelValues {
-						labelValues[i+2] = staticLabelValues[i]
+						labelValues[i+intrinsicLabelCount] = staticLabelValues[i]
 					}
 
 					for line := range t.Lines {
@@ -184,6 +206,17 @@ func main() {
 						if request, err := entry.Field("request"); err == nil {
 							f := strings.Split(request, " ")
 							labelValues[0] = f[0]
+
+							if nsCfg.HasRouteMatchers() {
+								labelValues[2] = ""
+								for i := range nsCfg.CompiledRouteRegexps {
+									match := nsCfg.CompiledRouteRegexps[i].MatchString(f[1])
+									if match {
+										labelValues[2] = nsCfg.Routes[i]
+										break
+									}
+								}
+							}
 						}
 
 						if s, err := entry.Field("status"); err == nil {
