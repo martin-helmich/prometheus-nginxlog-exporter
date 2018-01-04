@@ -35,10 +35,12 @@ import (
 // Metrics is a struct containing pointers to all metrics that should be
 // exposed to Prometheus
 type Metrics struct {
-	countTotal      *prometheus.CounterVec
-	bytesTotal      *prometheus.CounterVec
-	upstreamSeconds *prometheus.SummaryVec
-	responseSeconds *prometheus.SummaryVec
+	countTotal          *prometheus.CounterVec
+	bytesTotal          *prometheus.CounterVec
+	upstreamSeconds     *prometheus.SummaryVec
+	upstreamSecondsHist *prometheus.HistogramVec
+	responseSeconds     *prometheus.SummaryVec
+	responseSecondsHist *prometheus.HistogramVec
 }
 
 // Init initializes a metrics struct
@@ -66,16 +68,30 @@ func (m *Metrics) Init(cfg *config.NamespaceConfig) {
 		Help:      "Time needed by upstream servers to handle requests",
 	}, labels)
 
+	m.upstreamSecondsHist = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Namespace: cfg.Name,
+		Name:      "http_upstream_time_seconds_hist",
+		Help:      "Time needed by upstream servers to handle requests",
+	}, labels)
+
 	m.responseSeconds = prometheus.NewSummaryVec(prometheus.SummaryOpts{
 		Namespace: cfg.Name,
 		Name:      "http_response_time_seconds",
 		Help:      "Time needed by NGINX to handle requests",
 	}, labels)
 
+	m.responseSecondsHist = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Namespace: cfg.Name,
+		Name:      "http_response_time_seconds_hist",
+		Help:      "Time needed by NGINX to handle requests",
+	}, labels)
+
 	prometheus.MustRegister(m.countTotal)
 	prometheus.MustRegister(m.bytesTotal)
 	prometheus.MustRegister(m.upstreamSeconds)
+	prometheus.MustRegister(m.upstreamSecondsHist)
 	prometheus.MustRegister(m.responseSeconds)
+	prometheus.MustRegister(m.responseSecondsHist)
 }
 
 func main() {
@@ -182,10 +198,12 @@ func main() {
 
 						if upstreamTime, err := entry.FloatField("upstream_response_time"); err == nil {
 							metrics.upstreamSeconds.WithLabelValues(labelValues...).Observe(upstreamTime)
+							metrics.upstreamSecondsHist.WithLabelValues(labelValues...).Observe(upstreamTime)
 						}
 
 						if responseTime, err := entry.FloatField("request_time"); err == nil {
 							metrics.responseSeconds.WithLabelValues(labelValues...).Observe(responseTime)
+							metrics.responseSecondsHist.WithLabelValues(labelValues...).Observe(responseTime)
 						}
 					}
 				}(nsCfg)
