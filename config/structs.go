@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"regexp"
 	"sort"
 )
@@ -8,18 +9,20 @@ import (
 // StartupFlags is a struct containing options that can be passed via the
 // command line
 type StartupFlags struct {
-	ConfigFile string
-	Filenames  []string
-	Format     string
-	Namespace  string
-	ListenPort int
+	ConfigFile                 string
+	Filenames                  []string
+	Format                     string
+	Namespace                  string
+	ListenPort                 int
+	EnableExperimentalFeatures bool
 }
 
 // Config models the application's configuration
 type Config struct {
-	Listen     ListenConfig
-	Consul     ConsulConfig
-	Namespaces []NamespaceConfig `hcl:"namespace"`
+	Listen                     ListenConfig
+	Consul                     ConsulConfig
+	Namespaces                 []NamespaceConfig `hcl:"namespace"`
+	EnableExperimentalFeatures bool              `hcl:"enable_experimental"`
 }
 
 // ListenConfig is a struct describing the built-in webserver configuration
@@ -55,6 +58,28 @@ type NamespaceConfig struct {
 	OrderedLabelValues []string
 
 	CompiledRouteRegexps []*regexp.Regexp
+}
+
+func (c *Config) StabilityWarnings() error {
+	if c.EnableExperimentalFeatures {
+		return nil
+	}
+
+	for i := range c.Namespaces {
+		if err := c.Namespaces[i].StabilityWarnings(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (c *NamespaceConfig) StabilityWarnings() error {
+	if len(c.Routes) > 0 {
+		return errors.New("you are using the 'routes' configuration parameter")
+	}
+
+	return nil
 }
 
 func (c *NamespaceConfig) MustCompileRouteRegexps() {

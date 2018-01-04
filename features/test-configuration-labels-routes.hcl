@@ -1,4 +1,5 @@
 port = 4040
+enable_experimental = true
 
 namespace "nginx" {
   source_files = [".behave-sandbox/access.log"]

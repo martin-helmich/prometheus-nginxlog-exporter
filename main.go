@@ -99,6 +99,7 @@ func main() {
 	flag.StringVar(&opts.Format, "format", `$remote_addr - $remote_user [$time_local] "$request" $status $body_bytes_sent "$http_referer" "$http_user_agent" "$http_x_forwarded_for"`, "NGINX access log format")
 	flag.StringVar(&opts.Namespace, "namespace", "nginx", "namespace to use for metric names")
 	flag.StringVar(&opts.ConfigFile, "config-file", "", "Configuration file to read from")
+	flag.BoolVar(&opts.EnableExperimentalFeatures, "enable-experimental", false, "Set this flag to enable experimental features")
 	flag.Parse()
 
 	opts.Filenames = flag.Args()
@@ -113,6 +114,13 @@ func main() {
 	}
 
 	fmt.Printf("using configuration %s\n", cfg)
+
+	if stabilityError := cfg.StabilityWarnings(); stabilityError != nil && !opts.EnableExperimentalFeatures {
+		fmt.Fprintf(os.Stderr, "Your configuration file contains an option that is explicitly labeled as experimental feature:\n\n  %s\n\n", stabilityError.Error())
+		fmt.Fprintln(os.Stderr, "Use the -enable-experimental flag or the enable_experimental option to enable these features. Use them at your own peril.")
+
+		os.Exit(1)
+	}
 
 	if cfg.Consul.Enable {
 		registrator, err := discovery.NewConsulRegistrator(&cfg)
