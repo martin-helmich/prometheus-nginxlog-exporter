@@ -21,11 +21,23 @@ namespace "nginx" {
     "foo.log"
   ]
   format = "$remote_addr - $remote_user [$time_local] \"$request\" $status $body_bytes_sent \"$http_referer\" \"$http_user_agent\" \"$http_x_forwarded_for\""
+
   labels {
     app = "magicapp"
     foo = "bar"
   }
-  routes = [
-    "^/users/[0-9]+"
-  ]
+
+  relabel "user" {
+    from = "remote_user"
+    // whitelist = ["-", "user1", "user2"]
+  }
+
+  relabel "request_uri" {
+    from = "request"
+    split = 2
+
+    match "^users/[0-9]+" {
+      replacement = "/users/:id"
+    }
+  }
 }

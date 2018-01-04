@@ -1,11 +1,5 @@
 package config
 
-import (
-	"errors"
-	"regexp"
-	"sort"
-)
-
 // StartupFlags is a struct containing options that can be passed via the
 // command line
 type StartupFlags struct {
@@ -46,20 +40,6 @@ type ConsulServiceConfig struct {
 	Tags []string
 }
 
-// NamespaceConfig is a struct describing single metric namespaces
-type NamespaceConfig struct {
-	Name        string            `hcl:",key"`
-	SourceFiles []string          `hcl:"source_files"`
-	Format      string            `hcl:"format"`
-	Labels      map[string]string `hcl:"labels"`
-	Routes      []string          `hcl:"routes"`
-
-	OrderedLabelNames  []string
-	OrderedLabelValues []string
-
-	CompiledRouteRegexps []*regexp.Regexp
-}
-
 func (c *Config) StabilityWarnings() error {
 	if c.EnableExperimentalFeatures {
 		return nil
@@ -72,57 +52,4 @@ func (c *Config) StabilityWarnings() error {
 	}
 
 	return nil
-}
-
-func (c *NamespaceConfig) StabilityWarnings() error {
-	if len(c.Routes) > 0 {
-		return errors.New("you are using the 'routes' configuration parameter")
-	}
-
-	return nil
-}
-
-func (c *NamespaceConfig) MustCompileRouteRegexps() {
-	err := c.CompileRouteRegexps()
-	if err != nil {
-		panic(err)
-	}
-}
-
-func (c *NamespaceConfig) CompileRouteRegexps() error {
-	c.CompiledRouteRegexps = make([]*regexp.Regexp, len(c.Routes))
-
-	for i, e := range c.Routes {
-		r, err := regexp.Compile(e)
-		if err != nil {
-			return err
-		}
-
-		c.CompiledRouteRegexps[i] = r
-	}
-
-	return nil
-}
-
-func (c *NamespaceConfig) HasRouteMatchers() bool {
-	return len(c.Routes) > 0
-}
-
-// OrderLabels builds two lists of label keys and values, ordered by label name
-func (c *NamespaceConfig) OrderLabels() {
-	keys := make([]string, 0, len(c.Labels))
-	values := make([]string, len(c.Labels))
-
-	for k := range c.Labels {
-		keys = append(keys, k)
-	}
-
-	sort.Strings(keys)
-
-	for i, k := range keys {
-		values[i] = c.Labels[k]
-	}
-
-	c.OrderedLabelNames = keys
-	c.OrderedLabelValues = values
 }

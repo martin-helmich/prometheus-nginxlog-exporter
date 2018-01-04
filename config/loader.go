@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"io/ioutil"
 
 	"github.com/hashicorp/hcl"
@@ -22,8 +21,6 @@ func LoadConfigFromFile(config *Config, filename string) error {
 	if err != nil {
 		return err
 	}
-
-	fmt.Println(config)
 
 	return nil
 }

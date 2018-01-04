@@ -22,7 +22,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 
 	"github.com/hpcloud/tail"
@@ -30,6 +29,7 @@ import (
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/discovery"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/satyrius/gonx"
+	"github.com/martin-helmich/prometheus-nginxlog-exporter/relabeling"
 )
 
 // Metrics is a struct containing pointers to all metrics that should be
@@ -45,18 +45,17 @@ type Metrics struct {
 
 // Init initializes a metrics struct
 func (m *Metrics) Init(cfg *config.NamespaceConfig) {
-	cfg.OrderLabels()
-	cfg.MustCompileRouteRegexps()
+	cfg.MustCompile()
 
-	labels := []string{"method", "status"}
+	labels := cfg.OrderedLabelNames
 
-	//fmt.Println("ROUTES: ", cfg.Routes, len(cfg.Routes))
-
-	if cfg.HasRouteMatchers() {
-		labels = append(labels, "request_uri")
+	for _, r := range relabeling.DefaultRelabelings {
+		labels = append(labels, r.TargetLabel)
 	}
 
-	labels = append(labels, cfg.OrderedLabelNames...)
+	for i := range cfg.RelabelConfigs {
+		labels = append(labels, cfg.RelabelConfigs[i].TargetLabel)
+	}
 
 	m.countTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: cfg.Name,
@@ -180,17 +179,17 @@ func main() {
 				}
 
 				go func(nsCfg config.NamespaceConfig) {
+					relabelings := relabeling.NewRelabelings(nsCfg.RelabelConfigs)
+					relabelings = append(relabeling.DefaultRelabelings, relabelings...)
+
 					staticLabelValues := nsCfg.OrderedLabelValues
-					intrinsicLabelCount := 2
 
-					if nsCfg.HasRouteMatchers() {
-						intrinsicLabelCount++
-					}
-
-					labelValues := make([]string, len(staticLabelValues)+intrinsicLabelCount)
+					totalLabelCount := len(staticLabelValues) + len(relabelings)
+					relabelLabelOffset := len(staticLabelValues)
+					labelValues := make([]string, totalLabelCount)
 
 					for i := range staticLabelValues {
-						labelValues[i+intrinsicLabelCount] = staticLabelValues[i]
+						labelValues[i] = staticLabelValues[i]
 					}
 
 					for line := range t.Lines {
@@ -200,27 +199,13 @@ func main() {
 							continue
 						}
 
-						labelValues[0] = "UNKNOWN"
-						labelValues[1] = "0"
-
-						if request, err := entry.Field("request"); err == nil {
-							f := strings.Split(request, " ")
-							labelValues[0] = f[0]
-
-							if nsCfg.HasRouteMatchers() {
-								labelValues[2] = ""
-								for i := range nsCfg.CompiledRouteRegexps {
-									match := nsCfg.CompiledRouteRegexps[i].MatchString(f[1])
-									if match {
-										labelValues[2] = nsCfg.Routes[i]
-										break
-									}
+						for i := range relabelings {
+							if str, err := entry.Field(relabelings[i].SourceValue); err == nil {
+								mapped, err := relabelings[i].Map(str)
+								if err == nil {
+									labelValues[i + relabelLabelOffset] = mapped
 								}
 							}
-						}
-
-						if s, err := entry.Field("status"); err == nil {
-							labelValues[1] = s
 						}
 
 						metrics.countTotal.WithLabelValues(labelValues...).Inc()
