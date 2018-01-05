@@ -63,7 +63,7 @@ def step_impl(context, val, metric):
             response = requests.get('http://localhost:4040/metrics')
             text = response.text
             break
-        except request.ConnectionError:
+        except requests.ConnectionError:
             continue
 
     lines = [l.strip("\n") for l in text.split("\n")]
