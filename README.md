@@ -1,6 +1,8 @@
 NGINX-to-Prometheus log file exporter
 =====================================
 
+[![Build Status](https://travis-ci.org/martin-helmich/prometheus-nginxlog-exporter.svg?branch=master)](https://travis-ci.org/martin-helmich/prometheus-nginxlog-exporter)
+
 Helper tool that continuously reads an NGINX log file and exports metrics to
 [Prometheus](prom).
 
