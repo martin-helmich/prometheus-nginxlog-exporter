@@ -153,6 +153,17 @@ You can find an example unit file for this service [in this repository](systemd/
 
 The shipped unit file expects the binary to be located in `/usr/local/bin/prometheus-nginxlog-exporter` and the configuration file in `/etc/prometheus-nginxlog-exporter.hcl`. Adjust to your own needs.
 
+### Docker
+
+You can also run this exporter from the Docker image `quay.io/martinhelmich/prometheus-nginxlog-exporter`:
+
+    $ docker run --name nginx-exporter -v logs:/mnt/nginxlogs -p 4040:4040 quay.io/martinhelmich/prometheus-nginxlog-exporter mnt/nginxlogs/access.log
+
+Command-line flags and arguments can simply be appended to the `docker run` command, for example to use a
+configuration file:
+
+    $ docker run --name nginx-exporter -p 4040:4040 -v logs:/mnt/nginxlogs -v /path/to/config.hcl:/etc/prometheus-nginxlog-exporter.hcl quay.io/martinhelmich/prometheus-nginxlog-exporter -config-file /etc/prometheus-nginxlog-exporter.hcl
+
 Credits
 -------
 
