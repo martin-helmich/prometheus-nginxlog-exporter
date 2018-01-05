@@ -33,7 +33,7 @@ func LoadConfigFromFlags(config *Config, flags *StartupFlags) error {
 		Address: "0.0.0.0",
 	}
 	config.Namespaces = []NamespaceConfig{
-		NamespaceConfig{
+		{
 			Format:      flags.Format,
 			SourceFiles: flags.Filenames,
 			Name:        flags.Namespace,
