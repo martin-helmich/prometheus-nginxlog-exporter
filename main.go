@@ -195,7 +195,7 @@ func main() {
 					for line := range t.Lines {
 						entry, err := parser.ParseString(line.Text)
 						if err != nil {
-							fmt.Printf("error while parsing line '%s': %s", line.Text, err)
+							fmt.Printf("error while parsing line '%s': %s\n", line.Text, err)
 							continue
 						}
 
