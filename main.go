@@ -24,12 +24,12 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/hpcloud/tail"
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/config"
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/discovery"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/satyrius/gonx"
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/relabeling"
+	"github.com/martin-helmich/prometheus-nginxlog-exporter/tail"
 )
 
 // Metrics is a struct containing pointers to all metrics that should be
@@ -169,14 +169,14 @@ func main() {
 			metrics.Init(&nsCfg)
 
 			for _, f := range nsCfg.SourceFiles {
-				t, err := tail.TailFile(f, tail.Config{
-					Follow: true,
-					ReOpen: true,
-					Poll:   true,
-				})
+				t, err := tail.NewFollower(f)
 				if err != nil {
 					panic(err)
 				}
+
+				t.OnError(func (err error) {
+					panic(err)
+				})
 
 				go func(nsCfg config.NamespaceConfig) {
 					relabelings := relabeling.NewRelabelings(nsCfg.RelabelConfigs)
@@ -192,7 +192,7 @@ func main() {
 						labelValues[i] = staticLabelValues[i]
 					}
 
-					for line := range t.Lines {
+					for line := range t.Lines() {
 						entry, err := parser.ParseString(line.Text)
 						if err != nil {
 							fmt.Printf("error while parsing line '%s': %s\n", line.Text, err)
