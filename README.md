@@ -2,6 +2,7 @@ NGINX-to-Prometheus log file exporter
 =====================================
 
 [![Build Status](https://travis-ci.org/martin-helmich/prometheus-nginxlog-exporter.svg?branch=master)](https://travis-ci.org/martin-helmich/prometheus-nginxlog-exporter)
+[![Docker Repository on Quay](https://quay.io/repository/martinhelmich/prometheus-nginxlog-exporter/status "Docker Repository on Quay")](https://quay.io/repository/martinhelmich/prometheus-nginxlog-exporter)
 
 Helper tool that continuously reads an NGINX log file and exports metrics to
 [Prometheus](prom).
