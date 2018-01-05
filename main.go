@@ -41,6 +41,7 @@ type Metrics struct {
 	upstreamSecondsHist *prometheus.HistogramVec
 	responseSeconds     *prometheus.SummaryVec
 	responseSecondsHist *prometheus.HistogramVec
+	parseErrorsTotal    prometheus.Counter
 }
 
 // Init initializes a metrics struct
@@ -93,12 +94,19 @@ func (m *Metrics) Init(cfg *config.NamespaceConfig) {
 		Help:      "Time needed by NGINX to handle requests",
 	}, labels)
 
+	m.parseErrorsTotal = prometheus.NewCounter(prometheus.CounterOpts{
+		Namespace: cfg.Name,
+		Name:      "parse_errors_total",
+		Help:      "Total number of log file lines that could not be parsed",
+	})
+
 	prometheus.MustRegister(m.countTotal)
 	prometheus.MustRegister(m.bytesTotal)
 	prometheus.MustRegister(m.upstreamSeconds)
 	prometheus.MustRegister(m.upstreamSecondsHist)
 	prometheus.MustRegister(m.responseSeconds)
 	prometheus.MustRegister(m.responseSecondsHist)
+	prometheus.MustRegister(m.parseErrorsTotal)
 }
 
 func main() {
@@ -196,6 +204,7 @@ func main() {
 						entry, err := parser.ParseString(line.Text)
 						if err != nil {
 							fmt.Printf("error while parsing line '%s': %s\n", line.Text, err)
+							metrics.parseErrorsTotal.Inc()
 							continue
 						}
 
