@@ -5,12 +5,12 @@ listen {
 consul {
   enable = true
   address = "localhost:8500"
+  datacenter = "dc1"
+  scheme = "http"
+  token = ""
   service {
     id = "nginx-exporter"
     name = "nginx-exporter"
-    datacenter = "dc1"
-    scheme = "http"
-    token = ""
     tags = ["foo", "bar"]
   }
 }

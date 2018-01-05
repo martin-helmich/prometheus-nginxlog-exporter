@@ -17,6 +17,8 @@ func configFromFlags(t *testing.T, flags StartupFlags) Config {
 }
 
 func TestConfigContainsPortFromFlags(t *testing.T) {
+	t.Parallel()
+
 	cfg := configFromFlags(t, StartupFlags{
 		ListenPort: 1234,
 	})
@@ -27,6 +29,8 @@ func TestConfigContainsPortFromFlags(t *testing.T) {
 }
 
 func TestConfigContainsFilenamesFromFlags(t *testing.T) {
+	t.Parallel()
+
 	sf := []string{"/foo.log", "/bar.log"}
 	cfg := configFromFlags(t, StartupFlags{
 		ListenPort: 1234,

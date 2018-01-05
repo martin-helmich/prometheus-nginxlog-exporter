@@ -7,6 +7,12 @@
   revision = "3ac7bf7a47d159a033b107610db8a1b6575507a4"
 
 [[projects]]
+  name = "github.com/davecgh/go-spew"
+  packages = ["spew"]
+  revision = "346938d642f2ec3594ed81d874461961cd0faa76"
+  version = "v1.1.0"
+
+[[projects]]
   name = "github.com/golang/protobuf"
   packages = ["proto"]
   revision = "0c1f6d65b5a189c2250d10e71a5506f06f9fa0a0"
@@ -34,6 +40,12 @@
   revision = "c12348ce28de40eed0136aa2b644d0ee0650e56c"
 
 [[projects]]
+  name = "github.com/pmezard/go-difflib"
+  packages = ["difflib"]
+  revision = "792786c7400a136282c1664665ae0a8db921c6c2"
+  version = "v1.0.0"
+
+[[projects]]
   name = "github.com/prometheus/client_golang"
   packages = ["prometheus"]
   revision = "5636dc67ae776adf5590da7349e70fbb9559972d"
@@ -59,6 +71,12 @@
   revision = "71c9c5956b05290346eb980b79b9beb9db036803"
 
 [[projects]]
+  name = "github.com/stretchr/testify"
+  packages = ["assert"]
+  revision = "b91bfb9ebec76498946beb6af7c0230c7cc7ba6c"
+  version = "v1.2.0"
+
+[[projects]]
   name = "golang.org/x/sys"
   packages = ["unix"]
   revision = "c200b10b5d5e122be351b67af224adc6128af5bf"
@@ -78,6 +96,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "aba56f21d1f41215860252f78ea4fcd05b59976317f042731724cf38ee745700"
+  inputs-digest = "627f849cdc691d97a354cfce6062ac483a651b335972c8f8d4691d4ebe4862f5"
   solver-name = "gps-cdcl"
   solver-version = 1
