@@ -5,6 +5,7 @@ install:
 - pip install --user behave requests
 script:
 - go vet $(go list ./... | grep -v /vendor/)
+- go test ./...
 - CGO_ENABLED=0 go build -a -installsuffix cgo .
 - behave
 deploy:
