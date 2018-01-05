@@ -1,44 +1,52 @@
 package config
 
 import (
-	"io/ioutil"
+	"strings"
+	"fmt"
+	"io"
+	"os"
+)
 
-	"github.com/hashicorp/hcl"
+type ConfigType int
+
+const (
+	TYPE_HCL ConfigType = iota
+	TYPE_YAML
 )
 
 // LoadConfigFromFile fills a configuration object (passed as parameter) with
 // values read from a configuration file (pass as parameter by filename). The
 // configuration file needs to be in HCL format.
 func LoadConfigFromFile(config *Config, filename string) error {
-	buf, err := ioutil.ReadFile(filename)
+	var typ ConfigType
+
+	reader, err := os.Open(filename)
 	if err != nil {
 		return err
 	}
 
-	hclText := string(buf)
+	defer reader.Close()
 
-	err = hcl.Decode(config, hclText)
-	if err != nil {
-		return err
+	if strings.HasSuffix(filename, ".hcl") {
+		typ = TYPE_HCL
+	} else if strings.HasSuffix(filename, ".yaml") || strings.HasSuffix(filename, ".yml") {
+		typ = TYPE_YAML
+	} else {
+		return fmt.Errorf("config file '%s' has unsupported file type", filename)
 	}
 
-	return nil
+	return LoadConfigFromStream(config, reader, typ)
 }
 
-// LoadConfigFromFlags fills a configuration object (passed as parameter) with
-// values from command-line flags.
-func LoadConfigFromFlags(config *Config, flags *StartupFlags) error {
-	config.Listen = ListenConfig{
-		Port:    flags.ListenPort,
-		Address: "0.0.0.0",
+// LoadConfigFromStream fills a configuration object (passed as parameter) with
+// values read from a Reader interface (passed as parameter).
+func LoadConfigFromStream(config *Config, stream io.Reader, typ ConfigType) error {
+	switch typ {
+	case TYPE_HCL:
+		return loadConfigFromHCLStream(config, stream)
+	case TYPE_YAML:
+		return loadConfigFromYAMLStream(config, stream)
+	default:
+		return fmt.Errorf("unsupported config type %d", typ)
 	}
-	config.Namespaces = []NamespaceConfig{
-		{
-			Format:      flags.Format,
-			SourceFiles: flags.Filenames,
-			Name:        flags.Namespace,
-		},
-	}
-
-	return nil
 }

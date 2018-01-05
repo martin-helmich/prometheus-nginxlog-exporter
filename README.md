@@ -48,7 +48,7 @@ Configuration file
 ------------------
 
 You can specify a configuration file to read at startup. The configuration file
-is expected to be in [HCL](hcl) format. Here's an example file:
+is expected to be either in [HCL](hcl) or YAML format. Here's an example file:
 
 ```hcl
 listen {
@@ -59,12 +59,12 @@ listen {
 consul {
   enable = true
   address = "localhost:8500"
+  datacenter = "dc1"
+  scheme = "http"
+  token = ""
   service {
     id = "nginx-exporter"
     name = "nginx-exporter"
-    datacenter = "dc1"
-    scheme = "http"
-    token = ""
     tags = ["foo", "bar"]
   }
 }
@@ -87,6 +87,39 @@ namespace "app-2" {
     "/var/log/nginx/app2/access.log"
   ]
 }
+```
+
+The same file as YAML file:
+
+```yaml
+listen:
+  port: 4040
+  address: "10.1.2.3"
+
+consul:
+  enable: true
+  address: "localhost:8500"
+  datacenter: dc1
+  scheme: http
+  token: ""
+  service:
+    id: "nginx-exporter"
+    name: "nginx-exporter"
+    tags: ["foo", "bar"]
+
+namespaces:
+  - name: app-1
+    format: "$remote_addr - $remote_user [$time_local] \"$request\" $status $body_bytes_sent \"$http_referer\" \"$http_user_agent\" \"$http_x_forwarded_for\""
+    source_files:
+      - /var/log/nginx/app1/access.log
+    labels:
+      app: "application-one"
+      environment: "production"
+      foo: "bar"
+  - name: app-2
+    format: "$remote_addr - $remote_user [$time_local] \"$request\" $status $body_bytes_sent \"$http_referer\" \"$http_user_agent\" \"$http_x_forwarded_for\" $upstream_response_time"
+    source_files:
+      - /var/log/nginx/app2/access.log
 ```
 
 Experimental features
