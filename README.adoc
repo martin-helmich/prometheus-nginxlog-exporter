@@ -1,14 +1,21 @@
-NGINX-to-Prometheus log file exporter
-=====================================
+= NGINX-to-Prometheus log file exporter
 
-[![Build Status](https://travis-ci.org/martin-helmich/prometheus-nginxlog-exporter.svg?branch=master)](https://travis-ci.org/martin-helmich/prometheus-nginxlog-exporter)
-[![Docker Repository on Quay](https://quay.io/repository/martinhelmich/prometheus-nginxlog-exporter/status "Docker Repository on Quay")](https://quay.io/repository/martinhelmich/prometheus-nginxlog-exporter)
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+:toc:
+:toc-placement!:
 
-Helper tool that continuously reads an NGINX log file and exports metrics to
-[Prometheus](prom).
+image::https://travis-ci.org/martin-helmich/prometheus-nginxlog-exporter.svg?branch=master)](https://travis-ci.org/martin-helmich/prometheus-nginxlog-exporter[Build status]
+image::https://quay.io/repository/martinhelmich/prometheus-nginxlog-exporter/status "Docker Repository on Quay")](https://quay.io/repository/martinhelmich/prometheus-nginxlog-exporter[Docker Repository on Quay]
 
-Usage
------
+Helper tool that continuously reads an NGINX log file and exports metrics to https://prometheus.io/[Prometheus].
+
+toc::[]
+
+== Usage
 
 You can either use a simple configuration, using command-line flags, or create
 a configuration file with a more advanced configuration.
@@ -25,8 +32,7 @@ Use the configuration file:
 
     ./nginx-log-exporter -config-file /path/to/config.hcl
 
-Collected metrics
------------------
+== Collected metrics
 
 This exporter collects the following metrics. This collector can listen on
 multiple log files at once and publish metrics in different namespaces. Each
@@ -50,13 +56,13 @@ metric uses the labels `method` (containing the HTTP request method) and
 
 Additional labels can be configured in the configuration file (see below).
 
-Configuration file
-------------------
+== Configuration file
 
 You can specify a configuration file to read at startup. The configuration file
-is expected to be either in [HCL](hcl) or YAML format. Here's an example file:
+is expected to be either in https://github.com/hashicorp/hcl[HCL] or YAML format. Here's an example file:
 
-```hcl
+[source,hcl]
+----
 listen {
   port = 4040
   address = "10.1.2.3"
@@ -93,11 +99,12 @@ namespace "app-2" {
     "/var/log/nginx/app2/access.log"
   ]
 }
-```
+----
 
 The same file as YAML file:
 
-```yaml
+[source,yaml]
+----
 listen:
   port: 4040
   address: "10.1.2.3"
@@ -126,7 +133,7 @@ namespaces:
     format: "$remote_addr - $remote_user [$time_local] \"$request\" $status $body_bytes_sent \"$http_referer\" \"$http_user_agent\" \"$http_x_forwarded_for\" $upstream_response_time"
     source_files:
       - /var/log/nginx/app2/access.log
-```
+----
 
 Experimental features
 ---------------------
@@ -140,7 +147,8 @@ to your configuration file.
 Re-labeling lets you add arbitrary fields from the parsed log line as labels to your metrics.
 To add a dynamic label, add a `relabel` statement to your configuration file:
 
-```hcl
+[source,hcl]
+----
 namespace "app-1" {
   // ...
 
@@ -152,7 +160,7 @@ namespace "app-1" {
     ]
   }
 }
-```
+----
 
 The `whitelist` property is optional; if set, only the supplied values will be added as label.
 All other values will be subsumed under the `"other"` label value. See #16 for a more detailed
@@ -161,7 +169,8 @@ discussion around the reasoning.
 Dynamic relabeling also allows you to aggregate your metrics by request path (which replaces
 the experimental feature originally introduced in #23):
 
-```hcl
+[source,hcl]
+----
 namespace "app-1" {
   // ...
 
@@ -178,7 +187,7 @@ namespace "app-1" {
     }
   }
 }
-```
+----
 
 Running the collector
 ---------------------
@@ -207,10 +216,7 @@ configuration file:
 Credits
 -------
 
-- [tail](https://github.com/hpcloud/tail), MIT license
-- [gonx](https://github.com/satyrius/gonx), MIT license
-- [Prometheus Go client library](https://github.com/prometheus/client_golang), Apache License
-- [HashiCorp configuration language](hcl), Mozilla Public License
-
-[prom]: https://prometheus.io/
-[hcl]: https://github.com/hashicorp/hcl
+- https://github.com/hpcloud/tail[tail], MIT license
+- https://github.com/satyrius/gonx[gonx], MIT license
+- https://github.com/prometheus/client_golang[Prometheus Go client library], Apache License
+- https://github.com/hashicorp/hcl[HashiCorp configuration language], Mozilla Public License
