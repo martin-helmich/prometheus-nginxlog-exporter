@@ -38,9 +38,15 @@ metric uses the labels `method` (containing the HTTP request method) and
 - `<namespace>_http_upstream_time_seconds` - A summary vector of the upstream
   response times in seconds. Logging these needs to be specifically enabled in
   NGINX using the `$upstream_response_time` variable in the log format.
+- `<namespace>_http_upstream_time_seconds_hist` - Same as `<namespace>_http_upstream_time_seconds`,
+  but as a histogram vector. Also requires the `$upstream_response_time` variable
+  in the log format.
 - `<namespace>_http_response_time_seconds` - A summary vector of the total
   response times in seconds. Logging these needs to be specifically enabled in
   NGINX using the `$request_time` variable in the log format.
+- `<namespace>_http_response_time_seconds_hist` - Same as `<namespace>_http_response_time_seconds`,
+  but as a histogram vector. Also requires the `$request_time` variable
+  in the log format.
 
 Additional labels can be configured in the configuration file (see below).
 
