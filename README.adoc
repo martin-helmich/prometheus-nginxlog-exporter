@@ -218,6 +218,30 @@ configuration file:
 
     $ docker run --name nginx-exporter -p 4040:4040 -v logs:/mnt/nginxlogs -v /path/to/config.hcl:/etc/prometheus-nginxlog-exporter.hcl quay.io/martinhelmich/prometheus-nginxlog-exporter -config-file /etc/prometheus-nginxlog-exporter.hcl
 
+== Frequently Asked Questions
+
+> I have started the exporter, but it is not exporting any application-specific metrics!
+
+This may have several issues:
+
+1. Make sure that the access log files that your exporter is listening on are present. The exporter will exit with an error code if a file is present but cannot be opened (for example, due to bad permissions), but will _wait_ for a file if it does not yet exist.
+2. Make sure that the exporter can parse the lines from your access log files. Pay attention to the `<namespace>_parse_errors_total` metric, which will indicate how many log lines could not be parsed.
+
+> The exporter exports the `<namespace>_http_response_count_total` metric, but not _[other metric that is mentioned in the README]_!
+
+Most metrics require certain values to be present in the access log files that are not present in the NGINX default configuration. Especially, make sure that the access log contains the http://nginx.org/en/docs/http/ngx_http_upstream_module.html#var_upstream_response_time[`$upstream_response_time`], http://nginx.org/en/docs/http/ngx_http_log_module.html#var_request_time[`$request_time`] and/or http://nginx.org/en/docs/http/ngx_http_core_module.html#variables[`$body_bytes_sent`] variables. These need to be enabled in the NGINX configuration (more precisely, the `log_format` setting) and then added to the  format specified for the exporter.
+
+> How can I configure NGINX to export these variables?
+
+Have a look at NGINX's https://www.nginx.com/resources/admin-guide/logging-and-monitoring/[Logging and Monitoring] guide. It contains some good examples that contain the `$request_time` and `$upstream_response_time`:
+
+```
+log_format upstream_time '$remote_addr - $remote_user [$time_local] '
+                         '"$request" $status $body_bytes_sent '
+                         '"$http_referer" "$http_user_agent"'
+                         'rt=$request_time uct="$upstream_connect_time" uht="$upstream_header_time" urt="$upstream_response_time"';
+```
+
 Credits
 -------
 
