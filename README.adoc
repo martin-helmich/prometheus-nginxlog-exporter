@@ -8,8 +8,8 @@
 :toc:
 :toc-placement!:
 
-image::https://travis-ci.org/martin-helmich/prometheus-nginxlog-exporter.svg?branch=master)](https://travis-ci.org/martin-helmich/prometheus-nginxlog-exporter[Build status]
-image::https://quay.io/repository/martinhelmich/prometheus-nginxlog-exporter/status "Docker Repository on Quay")](https://quay.io/repository/martinhelmich/prometheus-nginxlog-exporter[Docker Repository on Quay]
+image::https://travis-ci.org/martin-helmich/prometheus-nginxlog-exporter.svg?branch=master](https://travis-ci.org/martin-helmich/prometheus-nginxlog-exporter[Build status]
+image::https://quay.io/repository/martinhelmich/prometheus-nginxlog-exporter/status(https://quay.io/repository/martinhelmich/prometheus-nginxlog-exporter[Docker Repository on Quay]
 
 Helper tool that continuously reads an NGINX log file and exports metrics to https://prometheus.io/[Prometheus].
 
