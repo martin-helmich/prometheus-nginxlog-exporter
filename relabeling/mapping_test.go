@@ -50,3 +50,20 @@ func TestRequestURIMapping(t *testing.T) {
 
 	assertMapping(t, r, "GET /users/12345 HTTP/1.1", "/users/:id")
 }
+
+func TestNoMatchMapping(t *testing.T) {
+	t.Parallel()
+
+	r, err := buildRelabeling(config.RelabelConfig{
+		Split: 2,
+		Matches: []config.RelabelValueMatch{
+			{RegexpString: "^/foo", Replacement: "/bar"},
+		},
+	})
+	if err != nil {
+		t.Error(err)
+	}
+
+	assertMapping(t, r, "GET /foo HTTP/1.1", "/bar")
+	assertMapping(t, r, "GET /baz HTTP/1.1", "/baz")
+}
