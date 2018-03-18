@@ -20,9 +20,5 @@ namespace "nginx" {
     match "^/profile" {
       replacement = "/profile"
     }
-
-    match {
-      replacement = ""
-    }
   }
 }

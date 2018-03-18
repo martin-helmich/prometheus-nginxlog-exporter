@@ -32,4 +32,4 @@ Feature: Config file allows custom labels
       """
     Then the exporter should report value 2 for metric nginx_http_response_count_total{method="GET",request_uri="/users/:id",status="200"}
     And the exporter should report value 1 for metric nginx_http_response_count_total{method="GET",request_uri="/profile",status="200"}
-    And the exporter should report value 1 for metric nginx_http_response_count_total{method="GET",request_uri="",status="200"}
+    And the exporter should report value 1 for metric nginx_http_response_count_total{method="GET",request_uri="/foo",status="200"}
