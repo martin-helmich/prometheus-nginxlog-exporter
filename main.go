@@ -127,16 +127,9 @@ func main() {
 
 	opts.Filenames = flag.Args()
 
-	if opts.ConfigFile != "" {
-		fmt.Printf("loading configuration file %s\n", opts.ConfigFile)
-		if err := config.LoadConfigFromFile(&cfg, opts.ConfigFile); err != nil {
-			panic(err)
-		}
-	} else if err := config.LoadConfigFromFlags(&cfg, &opts); err != nil {
-		panic(err)
-	}
+	loadConfig(&opts, &cfg)
 
-	fmt.Printf("using configuration %s\n", cfg)
+	fmt.Printf("using configuration %+v\n", cfg)
 
 	if stabilityError := cfg.StabilityWarnings(); stabilityError != nil && !opts.EnableExperimentalFeatures {
 		fmt.Fprintf(os.Stderr, "Your configuration file contains an option that is explicitly labeled as experimental feature:\n\n  %s\n\n", stabilityError.Error())
@@ -146,96 +139,13 @@ func main() {
 	}
 
 	if cfg.Consul.Enable {
-		registrator, err := discovery.NewConsulRegistrator(&cfg)
-		if err != nil {
-			panic(err)
-		}
-
-		fmt.Printf("registering service in Consul\n")
-		if err := registrator.RegisterConsul(); err != nil {
-			panic(err)
-		}
-
-		exitChan := make(chan os.Signal, 1)
-		signal.Notify(exitChan, os.Interrupt, syscall.SIGTERM)
-
-		go func() {
-			<-exitChan
-			fmt.Printf("unregistering service in Consul\n")
-			registrator.UnregisterConsul()
-			os.Exit(0)
-		}()
+		setupConsul(&cfg)
 	}
 
 	for _, ns := range cfg.Namespaces {
 		fmt.Printf("starting listener for namespace %s\n", ns.Name)
 
-		go func(nsCfg config.NamespaceConfig) {
-			parser := gonx.NewParser(nsCfg.Format)
-
-			metrics := Metrics{}
-			metrics.Init(&nsCfg)
-
-			for _, f := range nsCfg.SourceFiles {
-				t, err := tail.NewFollower(f)
-				if err != nil {
-					panic(err)
-				}
-
-				t.OnError(func(err error) {
-					panic(err)
-				})
-
-				go func(nsCfg config.NamespaceConfig) {
-					relabelings := relabeling.NewRelabelings(nsCfg.RelabelConfigs)
-					relabelings = append(relabeling.DefaultRelabelings, relabelings...)
-
-					staticLabelValues := nsCfg.OrderedLabelValues
-
-					totalLabelCount := len(staticLabelValues) + len(relabelings)
-					relabelLabelOffset := len(staticLabelValues)
-					labelValues := make([]string, totalLabelCount)
-
-					for i := range staticLabelValues {
-						labelValues[i] = staticLabelValues[i]
-					}
-
-					for line := range t.Lines() {
-						entry, err := parser.ParseString(line.Text)
-						if err != nil {
-							fmt.Printf("error while parsing line '%s': %s\n", line.Text, err)
-							metrics.parseErrorsTotal.Inc()
-							continue
-						}
-
-						for i := range relabelings {
-							if str, err := entry.Field(relabelings[i].SourceValue); err == nil {
-								mapped, err := relabelings[i].Map(str)
-								if err == nil {
-									labelValues[i+relabelLabelOffset] = mapped
-								}
-							}
-						}
-
-						metrics.countTotal.WithLabelValues(labelValues...).Inc()
-
-						if bytes, err := entry.FloatField("body_bytes_sent"); err == nil {
-							metrics.bytesTotal.WithLabelValues(labelValues...).Add(bytes)
-						}
-
-						if upstreamTime, err := entry.FloatField("upstream_response_time"); err == nil {
-							metrics.upstreamSeconds.WithLabelValues(labelValues...).Observe(upstreamTime)
-							metrics.upstreamSecondsHist.WithLabelValues(labelValues...).Observe(upstreamTime)
-						}
-
-						if responseTime, err := entry.FloatField("request_time"); err == nil {
-							metrics.responseSeconds.WithLabelValues(labelValues...).Observe(responseTime)
-							metrics.responseSecondsHist.WithLabelValues(labelValues...).Observe(responseTime)
-						}
-					}
-				}(nsCfg)
-			}
-		}(ns)
+		go processNamespace(ns)
 	}
 
 	listenAddr := fmt.Sprintf("%s:%d", cfg.Listen.Address, cfg.Listen.Port)
@@ -243,4 +153,106 @@ func main() {
 
 	http.Handle("/metrics", prometheus.Handler())
 	http.ListenAndServe(listenAddr, nil)
+}
+
+func loadConfig(opts *config.StartupFlags, cfg *config.Config) {
+	if opts.ConfigFile != "" {
+		fmt.Printf("loading configuration file %s\n", opts.ConfigFile)
+		if err := config.LoadConfigFromFile(cfg, opts.ConfigFile); err != nil {
+			panic(err)
+		}
+	} else if err := config.LoadConfigFromFlags(cfg, opts); err != nil {
+		panic(err)
+	}
+}
+
+func setupConsul(cfg *config.Config) {
+	registrator, err := discovery.NewConsulRegistrator(cfg)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("registering service in Consul\n")
+	if err := registrator.RegisterConsul(); err != nil {
+		panic(err)
+	}
+
+	exitChan := make(chan os.Signal, 1)
+	signal.Notify(exitChan, os.Interrupt, syscall.SIGTERM)
+
+	go func() {
+		<-exitChan
+		fmt.Printf("unregistering service in Consul\n")
+		registrator.UnregisterConsul()
+		os.Exit(0)
+	}()
+}
+
+func processNamespace(nsCfg config.NamespaceConfig) {
+	parser := gonx.NewParser(nsCfg.Format)
+
+	metrics := Metrics{}
+	metrics.Init(&nsCfg)
+
+	for _, f := range nsCfg.SourceFiles {
+		t, err := tail.NewFollower(f)
+		if err != nil {
+			panic(err)
+		}
+
+		t.OnError(func(err error) {
+			panic(err)
+		})
+
+		go processSourceFile(nsCfg, t, parser, &metrics)
+	}
+}
+
+func processSourceFile(nsCfg config.NamespaceConfig, t tail.Follower, parser *gonx.Parser, metrics *Metrics) {
+	relabelings := relabeling.NewRelabelings(nsCfg.RelabelConfigs)
+	relabelings = append(relabeling.DefaultRelabelings, relabelings...)
+
+	staticLabelValues := nsCfg.OrderedLabelValues
+
+	totalLabelCount := len(staticLabelValues) + len(relabelings)
+	relabelLabelOffset := len(staticLabelValues)
+	labelValues := make([]string, totalLabelCount)
+
+	for i := range staticLabelValues {
+		labelValues[i] = staticLabelValues[i]
+	}
+
+	for line := range t.Lines() {
+		entry, err := parser.ParseString(line.Text)
+		if err != nil {
+			fmt.Printf("error while parsing line '%s': %s\n", line.Text, err)
+			metrics.parseErrorsTotal.Inc()
+			continue
+		}
+
+		for i := range relabelings {
+			if str, err := entry.Field(relabelings[i].SourceValue); err == nil {
+				mapped, err := relabelings[i].Map(str)
+				if err == nil {
+					labelValues[i+relabelLabelOffset] = mapped
+				}
+			}
+		}
+
+		metrics.countTotal.WithLabelValues(labelValues...).Inc()
+
+		if bytes, err := entry.FloatField("body_bytes_sent"); err == nil {
+			metrics.bytesTotal.WithLabelValues(labelValues...).Add(bytes)
+		}
+
+		if upstreamTime, err := entry.FloatField("upstream_response_time"); err == nil {
+			metrics.upstreamSeconds.WithLabelValues(labelValues...).Observe(upstreamTime)
+			metrics.upstreamSecondsHist.WithLabelValues(labelValues...).Observe(upstreamTime)
+		}
+
+		if responseTime, err := entry.FloatField("request_time"); err == nil {
+			metrics.responseSeconds.WithLabelValues(labelValues...).Observe(responseTime)
+			metrics.responseSecondsHist.WithLabelValues(labelValues...).Observe(responseTime)
+		}
+	}
 }
