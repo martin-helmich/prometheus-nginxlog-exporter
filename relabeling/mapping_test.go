@@ -1,8 +1,8 @@
 package relabeling
 
 import (
-	"testing"
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/config"
+	"testing"
 )
 
 func buildRelabeling(cfg config.RelabelConfig) (*Relabeling, error) {

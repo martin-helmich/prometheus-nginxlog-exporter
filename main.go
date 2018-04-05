@@ -26,10 +26,10 @@ import (
 
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/config"
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/discovery"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/satyrius/gonx"
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/relabeling"
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/tail"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/satyrius/gonx"
 )
 
 // Metrics is a struct containing pointers to all metrics that should be
@@ -182,7 +182,7 @@ func main() {
 					panic(err)
 				}
 
-				t.OnError(func (err error) {
+				t.OnError(func(err error) {
 					panic(err)
 				})
 
@@ -212,7 +212,7 @@ func main() {
 							if str, err := entry.Field(relabelings[i].SourceValue); err == nil {
 								mapped, err := relabelings[i].Map(str)
 								if err == nil {
-									labelValues[i + relabelLabelOffset] = mapped
+									labelValues[i+relabelLabelOffset] = mapped
 								}
 							}
 						}

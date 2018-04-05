@@ -1,10 +1,10 @@
 package config
 
 import (
-	"testing"
 	"bytes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"testing"
 )
 
 const HCL_INPUT = `

@@ -9,7 +9,7 @@ func (r *Relabeling) Map(sourceValue string) (string, error) {
 		values := strings.Split(sourceValue, " ")
 
 		if len(values) >= r.Split {
-			sourceValue = values[r.Split - 1]
+			sourceValue = values[r.Split-1]
 		} else {
 			sourceValue = ""
 		}

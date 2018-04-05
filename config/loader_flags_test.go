@@ -1,8 +1,8 @@
 package config
 
 import (
-	"testing"
 	"reflect"
+	"testing"
 )
 
 func configFromFlags(t *testing.T, flags StartupFlags) Config {
@@ -34,7 +34,7 @@ func TestConfigContainsFilenamesFromFlags(t *testing.T) {
 	sf := []string{"/foo.log", "/bar.log"}
 	cfg := configFromFlags(t, StartupFlags{
 		ListenPort: 1234,
-		Filenames: sf,
+		Filenames:  sf,
 	})
 
 	if len(cfg.Namespaces) != 1 {

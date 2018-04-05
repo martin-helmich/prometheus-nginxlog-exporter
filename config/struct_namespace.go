@@ -1,8 +1,8 @@
 package config
 
 import (
-	"sort"
 	"errors"
+	"sort"
 )
 
 // NamespaceConfig is a struct describing single metric namespaces

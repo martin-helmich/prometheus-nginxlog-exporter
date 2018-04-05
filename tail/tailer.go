@@ -6,12 +6,12 @@ import (
 
 type Follower interface {
 	Lines() chan *tail.Line
-	OnError(func (error))
+	OnError(func(error))
 }
 
 type followerImpl struct {
 	filename string
-	t *tail.Tail
+	t        *tail.Tail
 }
 
 func NewFollower(filename string) (Follower, error) {

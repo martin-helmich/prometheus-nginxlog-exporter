@@ -1,10 +1,10 @@
 package config
 
 import (
-	"strings"
 	"fmt"
 	"io"
 	"os"
+	"strings"
 )
 
 type ConfigType int

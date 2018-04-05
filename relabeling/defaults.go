@@ -7,7 +7,7 @@ var DefaultRelabelings = []*Relabeling{
 		config.RelabelConfig{
 			TargetLabel: "method",
 			SourceValue: "request",
-			Split: 1,
+			Split:       1,
 		},
 	},
 	{
