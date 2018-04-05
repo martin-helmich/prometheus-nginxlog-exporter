@@ -4,6 +4,8 @@ import (
 	"strings"
 )
 
+// Map maps a sourceValue from the access log line according to the relabeling
+// config (matching against whitelists, regular expressions etc.)
 func (r *Relabeling) Map(sourceValue string) (string, error) {
 	if r.Split > 0 {
 		values := strings.Split(sourceValue, " ")

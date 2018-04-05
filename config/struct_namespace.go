@@ -17,6 +17,8 @@ type NamespaceConfig struct {
 	OrderedLabelValues []string
 }
 
+// StabilityWarnings tests if the NamespaceConfig uses any configuration settings
+// that are not yet declared "stable"
 func (c *NamespaceConfig) StabilityWarnings() error {
 	if len(c.RelabelConfigs) > 0 {
 		return errors.New("you are using the 'relabel' configuration parameter")
@@ -25,6 +27,8 @@ func (c *NamespaceConfig) StabilityWarnings() error {
 	return nil
 }
 
+// MustCompile compiles the configuration (mostly regular expressions that are used
+// in configuration variables) for later use
 func (c *NamespaceConfig) MustCompile() {
 	err := c.Compile()
 	if err != nil {
@@ -32,6 +36,8 @@ func (c *NamespaceConfig) MustCompile() {
 	}
 }
 
+// Compile compiles the configuration (mostly regular expressions that are used
+// in configuration variables) for later use
 func (c *NamespaceConfig) Compile() error {
 	for i := range c.RelabelConfigs {
 		if err := c.RelabelConfigs[i].Compile(); err != nil {

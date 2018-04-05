@@ -4,6 +4,7 @@ import (
 	"github.com/hpcloud/tail"
 )
 
+// Follower describes an object that continuously emits a stream of lines
 type Follower interface {
 	Lines() chan *tail.Line
 	OnError(func(error))
@@ -14,6 +15,7 @@ type followerImpl struct {
 	t        *tail.Tail
 }
 
+// NewFollower creates a new Follower instance for a given file (given by name)
 func NewFollower(filename string) (Follower, error) {
 	f := &followerImpl{
 		filename: filename,

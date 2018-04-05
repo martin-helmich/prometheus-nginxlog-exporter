@@ -2,12 +2,13 @@ package config
 
 import (
 	"bytes"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
-const HCL_INPUT = `
+const HCLInput = `
 listen {
   address = "10.0.0.1"
   port = 4040
@@ -58,7 +59,7 @@ namespace "nginx" {
 }
 `
 
-const YAML_INPUT = `
+const YAMLInput = `
 listen:
   address: "10.0.0.1"
   port: 4040
@@ -132,7 +133,7 @@ func assertConfigContents(t *testing.T, cfg Config) {
 func TestLoadsHCLConfigFile(t *testing.T) {
 	t.Parallel()
 
-	buf := bytes.NewBufferString(HCL_INPUT)
+	buf := bytes.NewBufferString(HCLInput)
 	cfg := Config{}
 
 	err := LoadConfigFromStream(&cfg, buf, TYPE_HCL)
@@ -143,7 +144,7 @@ func TestLoadsHCLConfigFile(t *testing.T) {
 func TestLoadsYAMLConfigFile(t *testing.T) {
 	t.Parallel()
 
-	buf := bytes.NewBufferString(YAML_INPUT)
+	buf := bytes.NewBufferString(YAMLInput)
 	cfg := Config{}
 
 	err := LoadConfigFromStream(&cfg, buf, TYPE_YAML)

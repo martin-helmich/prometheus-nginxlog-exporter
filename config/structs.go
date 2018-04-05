@@ -25,6 +25,8 @@ type ListenConfig struct {
 	Address string
 }
 
+// ConsulConfig describes the connection to a Consul server that the exporter should
+// register itself at
 type ConsulConfig struct {
 	Enable     bool
 	Address    string
@@ -34,12 +36,15 @@ type ConsulConfig struct {
 	Service    ConsulServiceConfig
 }
 
+// ConsulServiceConfig describes the Consul service that the exporter should use
 type ConsulServiceConfig struct {
 	ID   string
 	Name string
 	Tags []string
 }
 
+// StabilityWarnings tests if the Config or any of its sub-objects uses any
+// configuration settings that are not yet declared "stable"
 func (c *Config) StabilityWarnings() error {
 	if c.EnableExperimentalFeatures {
 		return nil

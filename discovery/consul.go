@@ -3,6 +3,7 @@ package discovery
 import "github.com/martin-helmich/prometheus-nginxlog-exporter/config"
 import "github.com/hashicorp/consul/api"
 
+// ConsulRegistrator is a helper struct that handles Consul service registration
 type ConsulRegistrator struct {
 	config    *config.Config
 	client    *api.Client
@@ -16,6 +17,7 @@ func getDefault(a string, b string) string {
 	return a
 }
 
+// NewConsulRegistrator is a constructor function for building a new ConsulRegistrator
 func NewConsulRegistrator(cfg *config.Config) (*ConsulRegistrator, error) {
 	config := api.Config{
 		Address:    getDefault(cfg.Consul.Address, "localhost:8500"),
@@ -39,6 +41,7 @@ func NewConsulRegistrator(cfg *config.Config) (*ConsulRegistrator, error) {
 	}, nil
 }
 
+// RegisterConsul registers the exporter instance at Consul
 func (r *ConsulRegistrator) RegisterConsul() error {
 	registration := api.AgentServiceRegistration{
 		ID:   r.serviceID,
@@ -55,6 +58,7 @@ func (r *ConsulRegistrator) RegisterConsul() error {
 	return nil
 }
 
+// UnregisterConsul deregisters the exporter from Consul again
 func (r *ConsulRegistrator) UnregisterConsul() error {
 	return r.client.Agent().ServiceDeregister(r.serviceID)
 }

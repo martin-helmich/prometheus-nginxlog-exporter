@@ -7,18 +7,21 @@ import (
 	"strings"
 )
 
-type ConfigType int
+// FileFormat describes which kind of configuration file the exporter was started with
+type FileFormat int
 
 const (
-	TYPE_HCL ConfigType = iota
-	TYPE_YAML
+	// TypeHCL describes the HCL (Hashicorp configuration language) file format
+	TypeHCL FileFormat = iota
+	// TypeYAML describes the YAML file format
+	TypeYAML
 )
 
 // LoadConfigFromFile fills a configuration object (passed as parameter) with
 // values read from a configuration file (pass as parameter by filename). The
 // configuration file needs to be in HCL format.
 func LoadConfigFromFile(config *Config, filename string) error {
-	var typ ConfigType
+	var typ FileFormat
 
 	reader, err := os.Open(filename)
 	if err != nil {
@@ -28,9 +31,9 @@ func LoadConfigFromFile(config *Config, filename string) error {
 	defer reader.Close()
 
 	if strings.HasSuffix(filename, ".hcl") {
-		typ = TYPE_HCL
+		typ = TypeHCL
 	} else if strings.HasSuffix(filename, ".yaml") || strings.HasSuffix(filename, ".yml") {
-		typ = TYPE_YAML
+		typ = TypeYAML
 	} else {
 		return fmt.Errorf("config file '%s' has unsupported file type", filename)
 	}
@@ -40,11 +43,11 @@ func LoadConfigFromFile(config *Config, filename string) error {
 
 // LoadConfigFromStream fills a configuration object (passed as parameter) with
 // values read from a Reader interface (passed as parameter).
-func LoadConfigFromStream(config *Config, stream io.Reader, typ ConfigType) error {
+func LoadConfigFromStream(config *Config, stream io.Reader, typ FileFormat) error {
 	switch typ {
-	case TYPE_HCL:
+	case TypeHCL:
 		return loadConfigFromHCLStream(config, stream)
-	case TYPE_YAML:
+	case TypeYAML:
 		return loadConfigFromYAMLStream(config, stream)
 	default:
 		return fmt.Errorf("unsupported config type %d", typ)

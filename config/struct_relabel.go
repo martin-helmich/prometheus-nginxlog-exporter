@@ -18,6 +18,7 @@ type RelabelConfig struct {
 	WhitelistMap    map[string]interface{}
 }
 
+// RelabelValueMatch describes a single label match statement
 type RelabelValueMatch struct {
 	RegexpString string `hcl:",key" yaml:"regexp"`
 	Replacement  string `hcl:"replacement"`
@@ -25,6 +26,7 @@ type RelabelValueMatch struct {
 	CompiledRegexp *regexp.Regexp
 }
 
+// Compile compiles expressions and lookup tables for efficient later use
 func (c *RelabelConfig) Compile() error {
 	c.WhitelistMap = make(map[string]interface{})
 	c.WhitelistExists = len(c.Whitelist) > 0
