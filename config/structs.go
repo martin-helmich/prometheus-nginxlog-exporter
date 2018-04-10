@@ -16,7 +16,12 @@ type Config struct {
 	Listen                     ListenConfig
 	Consul                     ConsulConfig
 	Namespaces                 []NamespaceConfig `hcl:"namespace"`
-	EnableExperimentalFeatures bool              `hcl:"enable_experimental"`
+	EnableExperimentalFeatures bool              `hcl:"enable_experimental" yaml:"enable_experimental"`
+
+	// In YAML, the EnableExperimentalFeatures property was originally set by the
+	// "enableexperimentalfeatures" property (although documented as "enable_experimental").
+	// This property is here for enabling the config to behave as documented, while keeping BC.
+	EnableExperimentalFeaturesOld bool `yaml:"enableexperimentalfeatures"`
 }
 
 // ListenConfig is a struct describing the built-in webserver configuration
@@ -46,7 +51,7 @@ type ConsulServiceConfig struct {
 // StabilityWarnings tests if the Config or any of its sub-objects uses any
 // configuration settings that are not yet declared "stable"
 func (c *Config) StabilityWarnings() error {
-	if c.EnableExperimentalFeatures {
+	if c.EnableExperimentalFeatures || c.EnableExperimentalFeaturesOld {
 		return nil
 	}
 
