@@ -136,7 +136,7 @@ func TestLoadsHCLConfigFile(t *testing.T) {
 	buf := bytes.NewBufferString(HCLInput)
 	cfg := Config{}
 
-	err := LoadConfigFromStream(&cfg, buf, TYPE_HCL)
+	err := LoadConfigFromStream(&cfg, buf, TypeHCL)
 	assert.Nil(t, err, "unexpected error: %v", err)
 	assertConfigContents(t, cfg)
 }
@@ -147,7 +147,7 @@ func TestLoadsYAMLConfigFile(t *testing.T) {
 	buf := bytes.NewBufferString(YAMLInput)
 	cfg := Config{}
 
-	err := LoadConfigFromStream(&cfg, buf, TYPE_YAML)
+	err := LoadConfigFromStream(&cfg, buf, TypeYAML)
 	assert.Nil(t, err, "unexpected error: %v", err)
 	assertConfigContents(t, cfg)
 }
