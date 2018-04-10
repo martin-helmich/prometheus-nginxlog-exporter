@@ -16,7 +16,7 @@ type Config struct {
 	Listen                     ListenConfig
 	Consul                     ConsulConfig
 	Namespaces                 []NamespaceConfig `hcl:"namespace"`
-	EnableExperimentalFeatures bool              `hcl:"enable_experimental"`
+	EnableExperimentalFeatures bool              `hcl:"enable_experimental" yaml:"enable_experimental"`
 }
 
 // ListenConfig is a struct describing the built-in webserver configuration
