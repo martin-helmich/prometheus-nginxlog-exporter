@@ -195,6 +195,35 @@ namespace "app1" {
 }
 ----
 
+The YAML configuration for relabelings works similar to the HCL configuration:
+
+[source,yaml]
+----
+namespaces:
+- name: app1
+  relabel_configs:
+  - target_label: request_uri
+    from: request
+    split: 2
+    matches:
+    - regexp: "^/users/[0-9]+"
+      replacement: "/users/:id"
+----
+
+If your regular expression contains groups, you can also use the matched values of those in the `replacement` value:
+
+[source,hcl]
+----
+relabel "request_uri" {
+  from = "request"
+  split = 2
+  
+  match "^/(users|profiles)/[0-9]+" {
+    replacement = "/$1/:id"
+  }
+}
+----
+
 Running the collector
 ---------------------
 
