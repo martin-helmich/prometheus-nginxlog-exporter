@@ -1,0 +1,10 @@
+enable_experimental: true
+
+listen:
+  port: 4040
+
+namespaces:
+  - name: ht_router
+    format: "$time_iso8601\t$geoip_country_code\t$remote_addr\t$scheme\t$host\t$request_method\t\"$request_uri\"\t$status\t$body_bytes_sent\t\"$http_referer\"\t\"$http_user_agent\"\t-\t$request_time\t$upstream_response_time"
+    source_files:
+      - .behave-sandbox/access.log

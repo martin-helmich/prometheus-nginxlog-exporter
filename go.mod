@@ -13,7 +13,7 @@ require (
 	github.com/prometheus/client_model v0.0.0-20150212101744-fa8ad6fec335
 	github.com/prometheus/common v0.0.0-20160623151427-4402f4e5ea79
 	github.com/prometheus/procfs v0.0.0-20160411190841-abf152e5f3e9
-	github.com/satyrius/gonx v0.0.0-20160324173036-71c9c5956b05
+	github.com/satyrius/gonx v1.3.1-0.20180709120835-47c52b995fe5
 	github.com/stretchr/testify v1.2.0
 	golang.org/x/sys v0.0.0-20161023150541-c200b10b5d5e
 	gopkg.in/fsnotify.v1 v1.3.0
