@@ -50,6 +50,8 @@ in your access log format (for example, the `http_upstream_time_seconds` metric
 will require your access to contain the variable `$upstream_response_time`.
 ====
 
+Metrics are exported at the `/metrics` path.
+
 These metrics are exported:
 
 |===
