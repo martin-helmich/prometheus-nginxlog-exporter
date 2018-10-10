@@ -1,10 +1,10 @@
 language: go
 go:
-- 1.9
+- 1.11
 install:
 - pip install --user behave requests
 script:
-- go vet $(go list ./... | grep -v /vendor/)
+- go vet ./...
 - go test ./...
 - CGO_ENABLED=0 go build -a -installsuffix cgo .
 - behave
@@ -17,4 +17,4 @@ deploy:
   on:
     repo: martin-helmich/prometheus-nginxlog-exporter
     tags: true
-    go: 1.9
+    go: 1.11
