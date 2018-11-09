@@ -26,7 +26,7 @@ a configuration file with a more advanced configuration.
 
 Use the command-line:
 
-    ./nginx-log-exporter \
+    ./prometheus-nginxlog-exporter \
       -format="<FORMAT>" \
       -listen-port=4040 \
       -namespace=nginx \
@@ -34,7 +34,7 @@ Use the command-line:
 
 Use the configuration file:
 
-    ./nginx-log-exporter -config-file /path/to/config.hcl
+    ./prometheus-nginxlog-exporter -config-file /path/to/config.hcl
 
 == Collected metrics
 
