@@ -1,6 +1,7 @@
 package tail
 
 import (
+        "os"
 	"github.com/hpcloud/tail"
 )
 
@@ -29,10 +30,12 @@ func NewFollower(filename string) (Follower, error) {
 }
 
 func (f *followerImpl) start() error {
+        seekInfo := tail.SeekInfo{Offset:0, Whence:os.SEEK_END}
 	t, err := tail.TailFile(f.filename, tail.Config{
 		Follow: true,
 		ReOpen: true,
 		Poll:   true,
+		Location: &seekInfo,
 	})
 
 	if err != nil {
