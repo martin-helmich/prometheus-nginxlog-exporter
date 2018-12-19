@@ -31,12 +31,22 @@ func NewFollower(filename string) (Follower, error) {
 }
 
 func (f *followerImpl) start() error {
-	seekInfo := tail.SeekInfo{Offset: 0, Whence: os.SEEK_END}
+	var seekInfo *tail.SeekInfo
+
+	_, err := os.Stat(f.filename)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			return err
+		}
+	} else {
+		seekInfo = &tail.SeekInfo{Offset: 0, Whence: os.SEEK_END}
+	}
+
 	t, err := tail.TailFile(f.filename, tail.Config{
 		Follow:   true,
 		ReOpen:   true,
 		Poll:     true,
-		Location: &seekInfo,
+		Location: seekInfo,
 	})
 
 	if err != nil {
