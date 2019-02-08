@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Martin Helmich <kontakt@martin-helmich.de>
+ * Copyright 2019 Martin Helmich <martin@helmich.me>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,13 +22,12 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"runtime"
-	"runtime/pprof"
 	"sync"
 	"syscall"
 
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/config"
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/discovery"
+	"github.com/martin-helmich/prometheus-nginxlog-exporter/prof"
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/relabeling"
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/tail"
 	"github.com/prometheus/client_golang/prometheus"
@@ -144,49 +143,14 @@ func main() {
 
 		fmt.Printf("caught term %s. exiting\n", sig)
 
-		if opts.CPUProfile != "" {
-			fmt.Printf("stopping CPU profiling...\n")
-			pprof.StopCPUProfile()
-		}
-
-		if opts.MemProfile != "" {
-			f, err := os.Create(opts.MemProfile)
-			if err != nil {
-				panic(err)
-			}
-
-			fmt.Printf("writing memory profile to file %s\n", opts.MemProfile)
-
-			runtime.GC()
-			if err := pprof.WriteHeapProfile(f); err != nil {
-				panic(err)
-			}
-
-			f.Close()
-		}
-
 		close(stopChan)
 		stopHandlers.Wait()
 
 		os.Exit(0)
 	}()
 
-	if opts.CPUProfile != "" {
-		f, err := os.Create(opts.CPUProfile)
-		if err != nil {
-			panic(err)
-		}
-
-		fmt.Printf("writing CPU profile to file %s\n", opts.CPUProfile)
-
-		if err := pprof.StartCPUProfile(f); err != nil {
-			panic(err)
-		}
-	}
-
-	if opts.MemProfile != "" {
-		runtime.MemProfileRate = 1
-	}
+	prof.SetupCPUProfiling(opts.CPUProfile, stopChan, &stopHandlers)
+	prof.SetupMemoryProfiling(opts.MemProfile, stopChan, &stopHandlers)
 
 	loadConfig(&opts, &cfg)
 
