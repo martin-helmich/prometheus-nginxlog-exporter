@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Martin Helmich <kontakt@martin-helmich.de>
+ * Copyright 2019 Martin Helmich <martin@helmich.me>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,12 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/config"
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/discovery"
+	"github.com/martin-helmich/prometheus-nginxlog-exporter/prof"
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/relabeling"
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/tail"
 	"github.com/prometheus/client_golang/prometheus"
@@ -123,9 +125,32 @@ func main() {
 	flag.StringVar(&opts.Namespace, "namespace", "nginx", "namespace to use for metric names")
 	flag.StringVar(&opts.ConfigFile, "config-file", "", "Configuration file to read from")
 	flag.BoolVar(&opts.EnableExperimentalFeatures, "enable-experimental", false, "Set this flag to enable experimental features")
+	flag.StringVar(&opts.CPUProfile, "cpuprofile", "", "write cpu profile to `file`")
+	flag.StringVar(&opts.MemProfile, "memprofile", "", "write memory profile to `file`")
 	flag.Parse()
 
 	opts.Filenames = flag.Args()
+
+	sigChan := make(chan os.Signal, 1)
+	stopChan := make(chan bool)
+	stopHandlers := sync.WaitGroup{}
+
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGINT)
+
+	go func() {
+		sig := <-sigChan
+
+		fmt.Printf("caught term %s. exiting\n", sig)
+
+		close(stopChan)
+		stopHandlers.Wait()
+
+		os.Exit(0)
+	}()
+
+	prof.SetupCPUProfiling(opts.CPUProfile, stopChan, &stopHandlers)
+	prof.SetupMemoryProfiling(opts.MemProfile, stopChan, &stopHandlers)
 
 	loadConfig(&opts, &cfg)
 
@@ -139,7 +164,7 @@ func main() {
 	}
 
 	if cfg.Consul.Enable {
-		setupConsul(&cfg)
+		setupConsul(&cfg, stopChan, &stopHandlers)
 	}
 
 	for _, ns := range cfg.Namespaces {
@@ -166,7 +191,7 @@ func loadConfig(opts *config.StartupFlags, cfg *config.Config) {
 	}
 }
 
-func setupConsul(cfg *config.Config) {
+func setupConsul(cfg *config.Config, stopChan <-chan bool, stopHandlers *sync.WaitGroup) {
 	registrator, err := discovery.NewConsulRegistrator(cfg)
 	if err != nil {
 		panic(err)
@@ -177,15 +202,15 @@ func setupConsul(cfg *config.Config) {
 		panic(err)
 	}
 
-	exitChan := make(chan os.Signal, 1)
-	signal.Notify(exitChan, os.Interrupt, syscall.SIGTERM)
-
 	go func() {
-		<-exitChan
+		<-stopChan
 		fmt.Printf("unregistering service in Consul\n")
 		registrator.UnregisterConsul()
-		os.Exit(0)
+
+		stopHandlers.Done()
 	}()
+
+	stopHandlers.Add(1)
 }
 
 func processNamespace(nsCfg config.NamespaceConfig) {
