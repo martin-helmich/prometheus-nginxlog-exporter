@@ -9,6 +9,9 @@ type StartupFlags struct {
 	Namespace                  string
 	ListenPort                 int
 	EnableExperimentalFeatures bool
+
+	CPUProfile string
+	MemProfile string
 }
 
 // Config models the application's configuration
