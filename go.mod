@@ -14,7 +14,7 @@ require (
 	github.com/prometheus/common v0.0.0-20160623151427-4402f4e5ea79
 	github.com/prometheus/procfs v0.0.0-20160411190841-abf152e5f3e9
 	github.com/satyrius/gonx v1.3.1-0.20180709120835-47c52b995fe5
-	github.com/stretchr/testify v1.2.0
+	github.com/stretchr/testify v1.3.0
 	golang.org/x/sys v0.0.0-20161023150541-c200b10b5d5e
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7
