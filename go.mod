@@ -16,7 +16,7 @@ require (
 	github.com/satyrius/gonx v1.3.1-0.20180709120835-47c52b995fe5
 	github.com/stretchr/testify v1.2.0
 	golang.org/x/sys v0.0.0-20161023150541-c200b10b5d5e
-	gopkg.in/fsnotify.v1 v1.3.0
+	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7
 	gopkg.in/yaml.v2 v2.0.0-20180104195722-0e4404da7122
 )
