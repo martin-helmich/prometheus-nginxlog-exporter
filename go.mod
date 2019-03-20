@@ -2,7 +2,7 @@ module github.com/martin-helmich/prometheus-nginxlog-exporter
 
 require (
 	github.com/beorn7/perks v0.0.0-20160229213445-3ac7bf7a47d1
-	github.com/davecgh/go-spew v1.1.0
+	github.com/davecgh/go-spew v1.1.1
 	github.com/golang/protobuf v0.0.0-20160614223140-0c1f6d65b5a1
 	github.com/hashicorp/consul v0.0.0-20150921174127-de080672fee9
 	github.com/hashicorp/hcl v0.0.0-20161028233240-8fa153c5b4e9
