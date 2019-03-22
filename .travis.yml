@@ -1,11 +1,15 @@
 language: go
 go:
-- 1.11
+- 1.12
 install:
 - pip install --user behave requests
+- GO111MODULE=off go get github.com/kisielk/errcheck
+- GO111MODULE=on go mod download
+- GO111MODULE=on go mod vendor
 script:
 - GO111MODULE=on go vet ./...
 - GO111MODULE=on go test ./...
+- errcheck .
 - GO111MODULE=on CGO_ENABLED=0 go build -a -installsuffix cgo .
 - behave
 deploy:
@@ -17,4 +21,4 @@ deploy:
   on:
     repo: martin-helmich/prometheus-nginxlog-exporter
     tags: true
-    go: 1.11
+    go: 1.12

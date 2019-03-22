@@ -22,6 +22,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"sync"
 	"syscall"
 
@@ -149,6 +150,11 @@ func main() {
 		os.Exit(0)
 	}()
 
+	defer func() {
+		close(stopChan)
+		stopHandlers.Wait()
+	}()
+
 	prof.SetupCPUProfiling(opts.CPUProfile, stopChan, &stopHandlers)
 	prof.SetupMemoryProfiling(opts.MemProfile, stopChan, &stopHandlers)
 
@@ -177,7 +183,10 @@ func main() {
 	fmt.Printf("running HTTP server on address %s\n", listenAddr)
 
 	http.Handle("/metrics", prometheus.Handler())
-	http.ListenAndServe(listenAddr, nil)
+
+	if err := http.ListenAndServe(listenAddr, nil); err != nil {
+		fmt.Printf("error while starting HTTP server: %s", err.Error())
+	}
 }
 
 func loadConfig(opts *config.StartupFlags, cfg *config.Config) {
@@ -205,7 +214,10 @@ func setupConsul(cfg *config.Config, stopChan <-chan bool, stopHandlers *sync.Wa
 	go func() {
 		<-stopChan
 		fmt.Printf("unregistering service in Consul\n")
-		registrator.UnregisterConsul()
+
+		if err := registrator.UnregisterConsul(); err != nil {
+			fmt.Printf("error while unregistering from consul: %s\n", err.Error())
+		}
 
 		stopHandlers.Done()
 	}()
@@ -255,8 +267,10 @@ func processSourceFile(nsCfg config.NamespaceConfig, t tail.Follower, parser *go
 			continue
 		}
 
+		fields := entry.Fields()
+
 		for i := range relabelings {
-			if str, err := entry.Field(relabelings[i].SourceValue); err == nil {
+			if str, ok := fields[relabelings[i].SourceValue]; ok {
 				mapped, err := relabelings[i].Map(str)
 				if err == nil {
 					labelValues[i+relabelLabelOffset] = mapped
@@ -266,18 +280,32 @@ func processSourceFile(nsCfg config.NamespaceConfig, t tail.Follower, parser *go
 
 		metrics.countTotal.WithLabelValues(labelValues...).Inc()
 
-		if bytes, err := entry.FloatField("body_bytes_sent"); err == nil {
+		if bytes, ok := floatFromFields(fields, "body_bytes_sent"); ok {
 			metrics.bytesTotal.WithLabelValues(labelValues...).Add(bytes)
 		}
 
-		if upstreamTime, err := entry.FloatField("upstream_response_time"); err == nil {
+		if upstreamTime, ok := floatFromFields(fields, "upstream_response_time"); ok {
 			metrics.upstreamSeconds.WithLabelValues(labelValues...).Observe(upstreamTime)
 			metrics.upstreamSecondsHist.WithLabelValues(labelValues...).Observe(upstreamTime)
 		}
 
-		if responseTime, err := entry.FloatField("request_time"); err == nil {
+		if responseTime, ok := floatFromFields(fields, "request_time"); ok {
 			metrics.responseSeconds.WithLabelValues(labelValues...).Observe(responseTime)
 			metrics.responseSecondsHist.WithLabelValues(labelValues...).Observe(responseTime)
 		}
 	}
+}
+
+func floatFromFields(fields gonx.Fields, name string) (float64, bool) {
+	val, ok := fields[name]
+	if !ok {
+		return 0, false
+	}
+
+	f, err := strconv.ParseFloat(val, 64)
+	if err != nil {
+		return 0, false
+	}
+
+	return f, true
 }
