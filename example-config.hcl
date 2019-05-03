@@ -27,6 +27,8 @@ namespace "nginx" {
     foo = "bar"
   }
 
+  histogram_buckets = [.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10]
+
   relabel "user" {
     from = "remote_user"
     // whitelist = ["-", "user1", "user2"]

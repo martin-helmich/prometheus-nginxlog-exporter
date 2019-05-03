@@ -83,6 +83,7 @@ func (m *Metrics) Init(cfg *config.NamespaceConfig) {
 		Namespace: cfg.Name,
 		Name:      "http_upstream_time_seconds_hist",
 		Help:      "Time needed by upstream servers to handle requests",
+		Buckets:   cfg.HistogramBuckets,
 	}, labels)
 
 	m.responseSeconds = prometheus.NewSummaryVec(prometheus.SummaryOpts{
@@ -95,6 +96,7 @@ func (m *Metrics) Init(cfg *config.NamespaceConfig) {
 		Namespace: cfg.Name,
 		Name:      "http_response_time_seconds_hist",
 		Help:      "Time needed by NGINX to handle requests",
+		Buckets:   cfg.HistogramBuckets,
 	}, labels)
 
 	m.parseErrorsTotal = prometheus.NewCounter(prometheus.CounterOpts{
