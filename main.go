@@ -47,18 +47,29 @@ type Metrics struct {
 	parseErrorsTotal    prometheus.Counter
 }
 
+func inLabels(label string, labels []string) bool {
+	for _, l := range labels {
+		if label == l {
+			return true
+		}
+	}
+	return false
+}
+
 // Init initializes a metrics struct
 func (m *Metrics) Init(cfg *config.NamespaceConfig) {
 	cfg.MustCompile()
 
 	labels := cfg.OrderedLabelNames
 
-	for _, r := range relabeling.DefaultRelabelings {
-		labels = append(labels, r.TargetLabel)
-	}
-
 	for i := range cfg.RelabelConfigs {
 		labels = append(labels, cfg.RelabelConfigs[i].TargetLabel)
+	}
+
+	for _, r := range relabeling.DefaultRelabelings {
+		if !inLabels(r.TargetLabel, labels) {
+			labels = append(labels, r.TargetLabel)
+		}
 	}
 
 	m.countTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
@@ -249,7 +260,8 @@ func processNamespace(nsCfg config.NamespaceConfig) {
 
 func processSourceFile(nsCfg config.NamespaceConfig, t tail.Follower, parser *gonx.Parser, metrics *Metrics) {
 	relabelings := relabeling.NewRelabelings(nsCfg.RelabelConfigs)
-	relabelings = append(relabeling.DefaultRelabelings, relabelings...)
+	relabelings = append(relabelings, relabeling.DefaultRelabelings...)
+	relabelings = relabeling.UniqueRelabelings(relabelings)
 
 	staticLabelValues := nsCfg.OrderedLabelValues
 
