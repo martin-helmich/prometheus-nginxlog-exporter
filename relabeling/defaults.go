@@ -12,7 +12,7 @@ var DefaultRelabelings = []*Relabeling{
 			Split:       1,
 
 			WhitelistExists: true,
-			WhitelistMap: []string{
+			Whitelist: []string{
 				"GET",
 				"HEAD",
 				"POST",
