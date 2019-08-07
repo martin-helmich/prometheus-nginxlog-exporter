@@ -10,6 +10,19 @@ var DefaultRelabelings = []*Relabeling{
 			TargetLabel: "method",
 			SourceValue: "request",
 			Split:       1,
+
+			WhitelistExists: true,
+			WhitelistMap: []string{
+				"GET",
+				"HEAD",
+				"POST",
+				"PUT",
+				"DELETE",
+				"CONNECT",
+				"OPTIONS",
+				"TRACE",
+				"PATCH",
+			},
 		},
 	},
 	{
