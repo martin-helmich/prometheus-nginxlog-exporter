@@ -18,7 +18,7 @@ require (
 	github.com/prometheus/procfs v0.0.0-20160411190841-abf152e5f3e9 // indirect
 	github.com/satyrius/gonx v1.3.1-0.20180709120835-47c52b995fe5
 	github.com/smartystreets/goconvey v0.0.0-20190306220146-200a235640ff // indirect
-	github.com/stretchr/testify v1.3.0
+	github.com/stretchr/testify v1.4.0
 	golang.org/x/sys v0.0.0-20161023150541-c200b10b5d5e // indirect
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 	gopkg.in/fsnotify.v1 v1.4.7 // indirect
