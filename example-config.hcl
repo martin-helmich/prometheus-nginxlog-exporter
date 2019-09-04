@@ -11,6 +11,7 @@ consul {
   service {
     id = "nginx-exporter"
     name = "nginx-exporter"
+    address = "192.168.3.1"
     tags = ["foo", "bar"]
   }
 }
