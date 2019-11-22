@@ -8,7 +8,7 @@ import (
 // NamespaceConfig is a struct describing single metric namespaces
 type NamespaceConfig struct {
 	Name             string            `hcl:",key"`
-	SourceFiles      []string          `hcl:"source_files" yaml:"source_files"`
+	SourceData       *SourceData       `hcl:"source_data" yaml:"source_data"`
 	Format           string            `hcl:"format"`
 	Labels           map[string]string `hcl:"labels"`
 	RelabelConfigs   []RelabelConfig   `hcl:"relabel" yaml:"relabel_configs"`
@@ -16,6 +16,11 @@ type NamespaceConfig struct {
 
 	OrderedLabelNames  []string
 	OrderedLabelValues []string
+}
+
+type SourceData struct {
+	Files      []string `hcl:"files" yaml:"files"`
+	SyslogTags []string `hcl:"syslog_tags" yaml:"syslog_tags"`
 }
 
 // StabilityWarnings tests if the NamespaceConfig uses any configuration settings

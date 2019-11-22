@@ -41,7 +41,7 @@ func TestConfigContainsFilenamesFromFlags(t *testing.T) {
 		t.Error("unexpected namespace count", "expected", 1, "actual", len(cfg.Namespaces))
 	}
 
-	if !reflect.DeepEqual(cfg.Namespaces[0].SourceFiles, sf) {
-		t.Error("unexpected source files", "expected", sf, "actual", cfg.Namespaces[0].SourceFiles)
+	if !reflect.DeepEqual(cfg.Namespaces[0].SourceData.Files, sf) {
+		t.Error("unexpected source files", "expected", sf, "actual", cfg.Namespaces[0].SourceData.Files)
 	}
 }
