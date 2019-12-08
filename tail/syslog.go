@@ -9,14 +9,17 @@ type syslogFollower struct {
 	line chan string
 
 	channel syslog.LogPartsChannel
-	server  syslog.Server
+	server  *syslog.Server
 }
 
-func NewSyslogFollower(tag string, channel syslog.LogPartsChannel) (Follower, error) {
+// NewSyslogFollower builds a new syslog follower from a previously constructed
+// syslog server & channel
+func NewSyslogFollower(tag string, server *syslog.Server, channel syslog.LogPartsChannel) (Follower, error) {
 	s := &syslogFollower{
 		tag:     tag,
 		channel: channel,
 		line:    make(chan string),
+		server:  server,
 	}
 	return s, nil
 }

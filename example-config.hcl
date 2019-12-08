@@ -24,6 +24,7 @@ namespace "nginx" {
 
     syslog {
       listen_address = "udp://0.0.0.0:5531"
+      format = "rfc3164"
       tags = [
         "sometag"
       ]

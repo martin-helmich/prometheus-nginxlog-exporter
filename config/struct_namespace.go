@@ -28,6 +28,7 @@ type FileSource []string
 
 type SyslogSource struct {
 	ListenAddress string   `hcl:"listen_address" yaml:"listen_address"`
+	Format        string   `hcl:"format" yaml:"format"`
 	Tags          []string `hcl:"tags" yaml:"tags"`
 }
 

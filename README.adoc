@@ -92,7 +92,7 @@ consul {
 
 namespace "app1" {
   format = "$remote_addr - $remote_user [$time_local] \"$request\" $status $body_bytes_sent \"$http_referer\" \"$http_user_agent\" \"$http_x_forwarded_for\""
-  source_data {
+  source {
     files = [
       "/var/log/nginx/app1/access.log"
     ]
@@ -108,7 +108,7 @@ namespace "app1" {
 
 namespace "app2" {
   format = "$remote_addr - $remote_user [$time_local] \"$request\" $status $body_bytes_sent \"$http_referer\" \"$http_user_agent\" \"$http_x_forwarded_for\" $upstream_response_time"
-  source_data  {
+  source {
     files = [
       "/var/log/nginx/app2/access.log"
     ]
@@ -138,7 +138,7 @@ consul:
 namespaces:
   - name: app1
     format: "$remote_addr - $remote_user [$time_local] \"$request\" $status $body_bytes_sent \"$http_referer\" \"$http_user_agent\" \"$http_x_forwarded_for\""
-    source_data:
+    source:
       files:
         - /var/log/nginx/app1/access.log
     labels:
@@ -148,7 +148,7 @@ namespaces:
     histogram_buckets: [.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10]
   - name: app2
     format: "$remote_addr - $remote_user [$time_local] \"$request\" $status $body_bytes_sent \"$http_referer\" \"$http_user_agent\" \"$http_x_forwarded_for\" $upstream_response_time"
-    source_data:
+    source:
       files:
         - /var/log/nginx/app2/access.log
 ----

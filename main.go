@@ -251,14 +251,16 @@ func processNamespace(nsCfg config.NamespaceConfig) {
 	}
 
 	if nsCfg.SourceData.Syslog != nil {
-		fmt.Printf("running Syslog server on address %s\n", nsCfg.SourceData.Syslog.ListenAddress)
-		channel, err := syslog.SyslogRunner(nsCfg.SourceData.Syslog.ListenAddress)
+		slCfg := nsCfg.SourceData.Syslog
+
+		fmt.Printf("running Syslog server on address %s\n", slCfg.ListenAddress)
+		channel, server, err := syslog.Listen(slCfg.ListenAddress, slCfg.Format)
 		if err != nil {
 			panic(err)
 		}
 
-		for _, f := range nsCfg.SourceData.Syslog.Tags {
-			t, err := tail.NewSyslogFollower(f, channel)
+		for _, f := range slCfg.Tags {
+			t, err := tail.NewSyslogFollower(f, server, channel)
 			if err != nil {
 				panic(err)
 			}
