@@ -2,6 +2,7 @@ from behave import *
 import subprocess
 import time
 import requests
+import logging
 
 formats = {
     "default": '$remote_addr - $remote_user [$time_local] "$request" $status $body_bytes_sent "$http_referer" "$http_user_agent" "$http_x_forwarded_for"',
@@ -53,6 +54,20 @@ def step_impl(context, filename):
     filename = '.behave-sandbox/%s' % filename
     with open(filename, 'a') as f:
         f.write("%s\n" % context.text)
+    time.sleep(.5)
+
+
+@when(u'the following HTTP request is logged to syslog on port {port}')
+@when(u'the following HTTP requests are logged to syslog on port {port}')
+def step_impl(context, port):
+    log = logging.getLogger('test')
+    log_handler = logging.handlers.SysLogHandler(("localhost", int(port)), logging.handlers.SysLogHandler.LOG_USER)
+    log.addHandler(log_handler)
+
+    lines = [l for l in context.text.split("\n") if l != ""]
+    for l in lines:
+        log.info(l)
+    
     time.sleep(.5)
 
 

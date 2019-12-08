@@ -46,10 +46,20 @@ func LoadConfigFromFile(config *Config, filename string) error {
 func LoadConfigFromStream(config *Config, stream io.Reader, typ FileFormat) error {
 	switch typ {
 	case TypeHCL:
-		return loadConfigFromHCLStream(config, stream)
+		if err := loadConfigFromHCLStream(config, stream); err != nil {
+			return err
+		}
 	case TypeYAML:
-		return loadConfigFromYAMLStream(config, stream)
+		if err := loadConfigFromYAMLStream(config, stream); err != nil {
+			return err
+		}
 	default:
 		return fmt.Errorf("unsupported config type %d", typ)
 	}
+
+	for i := range config.Namespaces {
+		config.Namespaces[i].ResolveDeprecations()
+	}
+
+	return nil
 }

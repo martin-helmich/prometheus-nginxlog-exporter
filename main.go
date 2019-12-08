@@ -26,6 +26,8 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/martin-helmich/prometheus-nginxlog-exporter/syslog"
+
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/config"
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/discovery"
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/prof"
@@ -228,13 +230,15 @@ func setupConsul(cfg *config.Config, stopChan <-chan bool, stopHandlers *sync.Wa
 }
 
 func processNamespace(nsCfg config.NamespaceConfig) {
+	var followers []tail.Follower
+
 	parser := gonx.NewParser(nsCfg.Format)
 
 	metrics := Metrics{}
 	metrics.Init(&nsCfg)
 
-	for _, f := range nsCfg.SourceFiles {
-		t, err := tail.NewFollower(f)
+	for _, f := range nsCfg.SourceData.Files {
+		t, err := tail.NewFileFollower(f)
 		if err != nil {
 			panic(err)
 		}
@@ -243,11 +247,39 @@ func processNamespace(nsCfg config.NamespaceConfig) {
 			panic(err)
 		})
 
-		go processSourceFile(nsCfg, t, parser, &metrics)
+		followers = append(followers, t)
 	}
+
+	if nsCfg.SourceData.Syslog != nil {
+		slCfg := nsCfg.SourceData.Syslog
+
+		fmt.Printf("running Syslog server on address %s\n", slCfg.ListenAddress)
+		channel, server, err := syslog.Listen(slCfg.ListenAddress, slCfg.Format)
+		if err != nil {
+			panic(err)
+		}
+
+		for _, f := range slCfg.Tags {
+			t, err := tail.NewSyslogFollower(f, server, channel)
+			if err != nil {
+				panic(err)
+			}
+
+			t.OnError(func(err error) {
+				panic(err)
+			})
+
+			followers = append(followers, t)
+		}
+	}
+
+	for _, f := range followers {
+		go processSource(nsCfg, f, parser, &metrics)
+	}
+
 }
 
-func processSourceFile(nsCfg config.NamespaceConfig, t tail.Follower, parser *gonx.Parser, metrics *Metrics) {
+func processSource(nsCfg config.NamespaceConfig, t tail.Follower, parser *gonx.Parser, metrics *Metrics) {
 	relabelings := relabeling.NewRelabelings(nsCfg.RelabelConfigs)
 	relabelings = append(relabeling.DefaultRelabelings, relabelings...)
 
@@ -262,9 +294,10 @@ func processSourceFile(nsCfg config.NamespaceConfig, t tail.Follower, parser *go
 	}
 
 	for line := range t.Lines() {
-		entry, err := parser.ParseString(line.Text)
+		fmt.Println(line)
+		entry, err := parser.ParseString(line)
 		if err != nil {
-			fmt.Printf("error while parsing line '%s': %s\n", line.Text, err)
+			fmt.Printf("error while parsing line '%s': %s\n", line, err)
 			metrics.parseErrorsTotal.Inc()
 			continue
 		}
