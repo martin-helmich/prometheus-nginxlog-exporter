@@ -11,7 +11,7 @@ func LoadConfigFromFlags(config *Config, flags *StartupFlags) error {
 		{
 			Format: flags.Format,
 			Name:   flags.Namespace,
-			SourceData: &SourceData{
+			SourceData: SourceData{
 				Files: flags.Filenames,
 			},
 		},

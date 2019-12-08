@@ -31,7 +31,6 @@ type Config struct {
 type ListenConfig struct {
 	Port    int
 	Address string
-	Syslog  string
 }
 
 // ConsulConfig describes the connection to a Consul server that the exporter should

@@ -1,6 +1,5 @@
 listen {
   port = 4040
-  syslog = "upd://0.0.0.0:5531"
 }
 
 consul {
@@ -17,14 +16,18 @@ consul {
 }
 
 namespace "nginx" {
-  source_data = {
+  source = {
     files = [
       "test.log",
       "foo.log",
-    ],
-    syslog_tags = [
-      "sometag"
     ]
+
+    syslog {
+      listen_address = "udp://0.0.0.0:5531"
+      tags = [
+        "sometag"
+      ]
+    }
   }
 
   format = "$remote_addr - $remote_user [$time_local] \"$request\" $status $body_bytes_sent \"$http_referer\" \"$http_user_agent\" \"$http_x_forwarded_for\""

@@ -1,8 +1,9 @@
 package config
 
 import (
-	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func configFromFlags(t *testing.T, flags StartupFlags) Config {
@@ -37,11 +38,6 @@ func TestConfigContainsFilenamesFromFlags(t *testing.T) {
 		Filenames:  sf,
 	})
 
-	if len(cfg.Namespaces) != 1 {
-		t.Error("unexpected namespace count", "expected", 1, "actual", len(cfg.Namespaces))
-	}
-
-	if !reflect.DeepEqual(cfg.Namespaces[0].SourceData.Files, sf) {
-		t.Error("unexpected source files", "expected", sf, "actual", cfg.Namespaces[0].SourceData.Files)
-	}
+	require.Len(t, cfg.Namespaces, 1)
+	require.Equal(t, FileSource(sf), cfg.Namespaces[0].SourceData.Files)
 }

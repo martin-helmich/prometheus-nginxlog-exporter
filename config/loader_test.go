@@ -29,12 +29,10 @@ consul {
 }
 
 namespace "nginx" {
-  source_data = {
-	files = [
-      "test.log",
-      "foo.log"
-    ]
-  }
+  source_files = [
+    "test.log",
+    "foo.log"
+  ]
   format = "$remote_addr - $remote_user [$time_local] \"$request\" $status $body_bytes_sent \"$http_referer\" \"$http_user_agent\" \"$http_x_forwarded_for\""
 
   labels {
@@ -82,10 +80,9 @@ consul:
 
 namespaces:
   - name: nginx
-    source_data:
-      files:
-        - test.log
-        - foo.log
+    source_files:
+      - test.log
+      - foo.log
     format: "$remote_addr - $remote_user [$time_local] \"$request\" $status $body_bytes_sent \"$http_referer\" \"$http_user_agent\" \"$http_x_forwarded_for\""
     labels:
       app: "magicapp"
@@ -122,7 +119,8 @@ func assertConfigContents(t *testing.T, cfg Config) {
 	n := cfg.Namespaces[0]
 	assert.Equal(t, "nginx", n.Name)
 	assert.Equal(t, "$remote_addr - $remote_user [$time_local] \"$request\" $status $body_bytes_sent \"$http_referer\" \"$http_user_agent\" \"$http_x_forwarded_for\"", n.Format)
-	assert.Equal(t, []string{"test.log", "foo.log"}, n.SourceData.Files)
+	assert.Equal(t, []string{"test.log", "foo.log"}, n.SourceFiles)
+	assert.Equal(t, FileSource{"test.log", "foo.log"}, n.SourceData.Files)
 	assert.Equal(t, "magicapp", n.Labels["app"])
 
 	require.Len(t, n.RelabelConfigs, 2)

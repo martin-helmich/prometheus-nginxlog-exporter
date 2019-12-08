@@ -19,14 +19,14 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/martin-helmich/prometheus-nginxlog-exporter/syslog"
-	gosyslog "gopkg.in/mcuadros/go-syslog.v2"
 	"net/http"
 	"os"
 	"os/signal"
 	"strconv"
 	"sync"
 	"syscall"
+
+	"github.com/martin-helmich/prometheus-nginxlog-exporter/syslog"
 
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/config"
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/discovery"
@@ -177,21 +177,10 @@ func main() {
 		setupConsul(&cfg, stopChan, &stopHandlers)
 	}
 
-	channel := make(gosyslog.LogPartsChannel)
-	if len(cfg.Listen.Syslog) > 0 {
-		var err error
-
-		fmt.Printf("running Syslog server on address %s\n", cfg.Listen.Syslog)
-		channel, err = syslog.SyslogRunner(cfg.Listen.Syslog)
-		if err != nil {
-			panic(err)
-		}
-	}
-
 	for _, ns := range cfg.Namespaces {
 		fmt.Printf("starting listener for namespace %s\n", ns.Name)
 
-		go processNamespace(ns, channel)
+		go processNamespace(ns)
 	}
 
 	listenAddr := fmt.Sprintf("%s:%d", cfg.Listen.Address, cfg.Listen.Port)
@@ -240,7 +229,7 @@ func setupConsul(cfg *config.Config, stopChan <-chan bool, stopHandlers *sync.Wa
 	stopHandlers.Add(1)
 }
 
-func processNamespace(nsCfg config.NamespaceConfig, channel gosyslog.LogPartsChannel) {
+func processNamespace(nsCfg config.NamespaceConfig) {
 	var followers []tail.Follower
 
 	parser := gonx.NewParser(nsCfg.Format)
@@ -261,17 +250,25 @@ func processNamespace(nsCfg config.NamespaceConfig, channel gosyslog.LogPartsCha
 		followers = append(followers, t)
 	}
 
-	for _, f := range nsCfg.SourceData.SyslogTags {
-		t, err := tail.NewSyslogFollower(f, channel)
+	if nsCfg.SourceData.Syslog != nil {
+		fmt.Printf("running Syslog server on address %s\n", nsCfg.SourceData.Syslog.ListenAddress)
+		channel, err := syslog.SyslogRunner(nsCfg.SourceData.Syslog.ListenAddress)
 		if err != nil {
 			panic(err)
 		}
 
-		t.OnError(func(err error) {
-			panic(err)
-		})
+		for _, f := range nsCfg.SourceData.Syslog.Tags {
+			t, err := tail.NewSyslogFollower(f, channel)
+			if err != nil {
+				panic(err)
+			}
 
-		followers = append(followers, t)
+			t.OnError(func(err error) {
+				panic(err)
+			})
+
+			followers = append(followers, t)
+		}
 	}
 
 	for _, f := range followers {

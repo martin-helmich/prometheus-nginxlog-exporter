@@ -1,9 +1,7 @@
 port = 4040
 
 namespace "testone" {
-  source_data {
-    files = [".behave-sandbox/access.log"]
-  }
+  source_files = [".behave-sandbox/access.log"]
   format = "$remote_addr - $remote_user [$time_local] \"$request\" $status $body_bytes_sent \"$http_referer\" \"$http_user_agent\" \"$http_x_forwarded_for\""
   labels {
     test1 = "1-1"
@@ -12,9 +10,7 @@ namespace "testone" {
 }
 
 namespace "testtwo" {
-  source_data {
-    files = [".behave-sandbox/access-two.log"]
-  }
+  source_files = [".behave-sandbox/access-two.log"]
   format = "$remote_addr - $remote_user [$time_local] \"$request\" $status $body_bytes_sent \"$http_referer\" \"$http_user_agent\" \"$http_x_forwarded_for\""
   labels {
     test1 = "2-1"
@@ -24,9 +20,7 @@ namespace "testtwo" {
 
 
 namespace "testthree" {
-  source_data {
-    files = [".behave-sandbox/access-three.log"]
-  }
+  source_files = [".behave-sandbox/access-three.log"]
   format = "$remote_addr - $remote_user [$time_local] \"$request\" $status $body_bytes_sent \"$http_referer\" \"$http_user_agent\" \"$http_x_forwarded_for\""
   labels {
     test1 = "3-1"
@@ -36,9 +30,7 @@ namespace "testthree" {
 
 
 namespace "testfour" {
-  source_data {
-    files = [".behave-sandbox/access-four.log"]
-  }
+  source_files = [".behave-sandbox/access-four.log"]
   format = "$remote_addr - $remote_user [$time_local] \"$request\" $status $body_bytes_sent \"$http_referer\" \"$http_user_agent\" \"$http_x_forwarded_for\""
   labels {
     test1 = "4-1"
@@ -48,9 +40,7 @@ namespace "testfour" {
 
 
 namespace "testfive" {
-  source_data {
-    files = [".behave-sandbox/access-five.log"]
-  }
+  source_files = [".behave-sandbox/access-five.log"]
   format = "$remote_addr - $remote_user [$time_local] \"$request\" $status $body_bytes_sent \"$http_referer\" \"$http_user_agent\" \"$http_x_forwarded_for\""
   labels {
     test1 = "5-1"
