@@ -153,6 +153,54 @@ namespaces:
         - /var/log/nginx/app2/access.log
 ----
 
+Advanced features
+-----------------
+
+### Log sources
+
+Currently, the exporter supports reading log data from
+
+1. files
+2. syslog
+
+All log sources can be configured on a per-namespace basis using the `source` property.
+
+#### Reading from files
+
+When reading from log files, all that is needed is a `files` property:
+
+```hcl
+namespace "test" {
+  source {
+    files = ["/var/log/nginx/access.log"]
+    // ...
+  }
+}
+```
+
+#### Reading from syslog
+
+The exporter can also open and listen on a Syslog port and read logs from there. Configuration works as follows:
+
+[source,hcl]
+----
+namespace "test" {
+  source {
+    syslog {
+      listen_address = "udp://127.0.0.1:8514" <1>
+      format = "rfc3164" <2>
+      tags = ["nginx"]
+    }
+
+    // ...
+  }
+}
+----
+<1> The `listen_address` might be either a TCP or UDP address. UNIX sockets are not supported (yet -- pull requests are welcome)
+<2> The `format` may be one of `rfc3164`, `rfc5424`, `rfc6587` or `auto`. If omitted, it will default to `auto`.
+
+Have a look at http://nginx.org/en/docs/syslog.html[the respective section of the NGINX documentation] on how to set up NGINX to log into syslog.
+
 Experimental features
 ---------------------
 
