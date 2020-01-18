@@ -8,6 +8,16 @@ Feature: Various issues reported in the bug tracker remain solved
       """
     Then the exporter should report value 1 for metric ht_router_http_response_count_total{method="",status="200"}
 
+  Scenario: Issue 90: Unknown parse error
+    Given a running exporter listening with configuration file "test-config-issue90.yaml"
+    When the following HTTP request is logged to "access.log"
+      """
+      10.rr.ii.yy - - [25/Dec/2019:08:06:42 +0300] "GET /offsets/topic/xxx-xxx/partition/0 HTTP/1.1" 200 96 "-" "Java/11.0.2" "-"
+      10.rr.ii.yy - - [25/Dec/2019:08:06:42 +0300] "GET /api/v2/topics/xxx-xxxx/partitions/0/offsets HTTP/1.1" 200 68 "-" "Java/11.0.2" "-"
+      10.rr.ii.yy - - [25/Dec/2019:08:06:42 +0300] "GET /api/v2/topics/xxxxxx/partitions/2/messages?offset=96&count=10 HTTP/1.1" 200 41 "-" "Java/11.0.2" "-"
+      """
+    Then the exporter should report value 3 for metric test_http_response_count_total{method="GET",status="200"}
+
   Scenario: Issue 91: Unknown parse error
     Given a running exporter listening with configuration file "test-config-issue91.yaml"
     When the following HTTP request is logged to "access.log"
