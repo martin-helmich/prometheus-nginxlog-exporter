@@ -34,6 +34,7 @@ import (
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/relabeling"
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/tail"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/satyrius/gonx"
 )
 
@@ -76,9 +77,10 @@ func (m *Metrics) Init(cfg *config.NamespaceConfig) {
 	}, labels)
 
 	m.upstreamSeconds = prometheus.NewSummaryVec(prometheus.SummaryOpts{
-		Namespace: cfg.Name,
-		Name:      "http_upstream_time_seconds",
-		Help:      "Time needed by upstream servers to handle requests",
+		Namespace:  cfg.Name,
+		Name:       "http_upstream_time_seconds",
+		Help:       "Time needed by upstream servers to handle requests",
+		Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
 	}, labels)
 
 	m.upstreamSecondsHist = prometheus.NewHistogramVec(prometheus.HistogramOpts{
@@ -186,7 +188,7 @@ func main() {
 	listenAddr := fmt.Sprintf("%s:%d", cfg.Listen.Address, cfg.Listen.Port)
 	fmt.Printf("running HTTP server on address %s\n", listenAddr)
 
-	http.Handle("/metrics", prometheus.Handler())
+	http.Handle("/metrics", promhttp.Handler())
 
 	if err := http.ListenAndServe(listenAddr, nil); err != nil {
 		fmt.Printf("error while starting HTTP server: %s", err.Error())
