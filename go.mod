@@ -25,7 +25,7 @@ require (
 	github.com/satyrius/gonx v1.3.1-0.20180709120835-47c52b995fe5
 	github.com/smartystreets/goconvey v0.0.0-20190306220146-200a235640ff // indirect
 	github.com/stretchr/objx v0.2.0 // indirect
-	github.com/stretchr/testify v1.4.0
+	github.com/stretchr/testify v1.5.0
 	golang.org/x/crypto v0.0.0-20200204104054-c9f3fb736b72 // indirect
 	golang.org/x/mod v0.2.0 // indirect
 	golang.org/x/net v0.0.0-20200202094626-16171245cfb2 // indirect
