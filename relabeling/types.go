@@ -24,3 +24,17 @@ func NewRelabelings(cfgs []config.RelabelConfig) []*Relabeling {
 func NewRelabeling(cfg *config.RelabelConfig) *Relabeling {
 	return &Relabeling{*cfg}
 }
+
+// UniqueRelabelings creates a unique relabelings, the duplicated one at the end will discard.
+func UniqueRelabelings(relabelings []*Relabeling) []*Relabeling {
+	result := make([]*Relabeling, 0, len(relabelings))
+	found := make(map[string]struct{})
+	for _, r := range relabelings {
+		if _, ok := found[r.TargetLabel]; ok {
+			continue
+		}
+		found[r.TargetLabel] = struct{}{}
+		result = append(result, r)
+	}
+	return result
+}
