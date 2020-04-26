@@ -6,10 +6,14 @@ jobs:
   build:
     name: Compile binary
     runs-on: ubuntu-latest
-    container: golang:1.13
 
     steps:
       - uses: actions/checkout@v1
+
+      - name: Set up Go
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.13.x
 
       - name: Compile
         run: CGO_ENABLED=0 go build -a -installsuffix cgo -o prometheus-nginxlog-exporter .
@@ -23,10 +27,14 @@ jobs:
   tests_unit:
     name: Run unit tests
     runs-on: ubuntu-latest
-    container: golang:1.13
 
     steps:
       - uses: actions/checkout@v1
+
+      - name: Set up Go
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.13.x
 
       - name: Run unit tests
         run: go test ./...
@@ -35,11 +43,15 @@ jobs:
     name: Run acceptance tests
     needs: build
     runs-on: ubuntu-latest
-    container: python:3.7
 
     steps:
       - name: Install Behave
         run: pip install behave requests
+
+      - name: Set up Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: "3.7"
 
       - name: Download build artifact
         uses: actions/download-artifact@v1
