@@ -46,9 +46,10 @@ type ConsulConfig struct {
 
 // ConsulServiceConfig describes the Consul service that the exporter should use
 type ConsulServiceConfig struct {
-	ID   string
-	Name string
-	Tags []string
+	ID      string
+	Name    string
+	Address string
+	Tags    []string
 }
 
 // StabilityWarnings tests if the Config or any of its sub-objects uses any
