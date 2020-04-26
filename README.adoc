@@ -205,8 +205,9 @@ Experimental features
 ---------------------
 
 The exporter contains features that are currently experimental and may change without prior notice.
-To use these features, either set the `-enable-experimental` flag or add a `enable_experimental` option
-to your configuration file (on document root like `enable_experimental: true`).
+To use these features, either set the `-enable-experimental` flag or add a `enable_experimental`
+option to your configuration file (on the root of the configuration file document, like
+`enable_experimental: true` in YAML or `enable_experimental = true` in HCL).
 
 ### Dynamic re-labeling
 
@@ -232,8 +233,9 @@ All other values will be subsumed under the `"other"` label value. See #16 for a
 discussion around the reasoning.
 
 Dynamic relabeling also allows you to aggregate your metrics by request path (which replaces
-the experimental feature originally introduced in #23):
-(`split` the content of the `request` variable at every space and return the second element (index 1) of the resulting list which is the base for the regex)
+the experimental feature originally introduced in #23). The following example splits the content of
+the `request` variable at every space (using `split`) and return the second element (index 1) of the
+resulting list which is the base for the regex):
 
 [source,hcl]
 ----
