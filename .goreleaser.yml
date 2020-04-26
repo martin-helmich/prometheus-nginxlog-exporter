@@ -25,11 +25,11 @@ dockers:
     - quay.io/martinhelmich/prometheus-nginxlog-exporter:v{{ .Major }}
     - quay.io/martinhelmich/prometheus-nginxlog-exporter:v{{ .Major }}.{{ .Minor }}
     - quay.io/martinhelmich/prometheus-nginxlog-exporter:{{ .Tag }}
-    - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter:latest
-    - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter:stable
-    - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter:v{{ .Major }}
-    - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter:v{{ .Major }}.{{ .Minor }}
-    - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter:{{ .Tag }}
+    - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:latest
+    - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:stable
+    - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:v{{ .Major }}
+    - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:v{{ .Major }}.{{ .Minor }}
+    - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:{{ .Tag }}
     binaries:
       - prometheus-nginxlog-exporter
     goos: linux
