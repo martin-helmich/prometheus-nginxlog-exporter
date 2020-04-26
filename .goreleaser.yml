@@ -34,3 +34,20 @@ dockers:
       - prometheus-nginxlog-exporter
     goos: linux
     goarch: amd64
+nfpms:
+  - vendor: Martin Helmich
+    homepage: https://github.com/martin-helmich/prometheus-nginxlog-exporter
+    description: Export Prometheus metrics from NGINX (or compatible) log files
+    license: Apache 2.0
+    formats:
+      - deb
+      - rpm
+    dependencies:
+      - systemd
+    bindir: /usr/sbin
+    files:
+      res/package/prometheus-nginxlog-exporter.service: /lib/systemd/system/prometheus-nginxlog-exporter.service
+    config_files:
+      res/package/default-config.hcl: /etc/prometheus-nginxlog-exporter.hcl
+    scripts:
+      postinstall: res/package/scripts/postinstall.sh

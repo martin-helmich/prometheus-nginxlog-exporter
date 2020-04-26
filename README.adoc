@@ -12,6 +12,7 @@ image:https://img.shields.io/github/workflow/status/martin-helmich/prometheus-ng
 image:https://quay.io/repository/martinhelmich/prometheus-nginxlog-exporter/status[link="https://quay.io/repository/martinhelmich/prometheus-nginxlog-exporter",Docker Repository on Quay]
 image:https://goreportcard.com/badge/github.com/martin-helmich/prometheus-nginxlog-exporter[link="https://goreportcard.com/report/github.com/martin-helmich/prometheus-nginxlog-exporter", Go Report Card]
 image:https://img.shields.io/github/license/martin-helmich/prometheus-nginxlog-exporter[GitHub]
+image:https://img.shields.io/badge/donate-PayPal-yellow[link="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=SEARYHPVS9U5N&source=url", Donate]
 
 Helper tool that continuously reads an NGINX log file and exports metrics to https://prometheus.io/[Prometheus].
 
