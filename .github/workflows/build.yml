@@ -61,7 +61,9 @@ jobs:
           name: build
 
       - name: Link built file to cwd
-        run: ln -s build/prometheus-nginxlog-exporter .
+        run: |
+          cp build/prometheus-nginxlog-exporter .
+          chmod +x ./prometheus-nginxlog-exporter
       
       - name: Run acceptance tests
         run: behave
