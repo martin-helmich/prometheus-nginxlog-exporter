@@ -45,13 +45,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Install Behave
-        run: pip install behave requests
-
       - name: Set up Python
         uses: actions/setup-python@v1
         with:
           python-version: "3.7"
+
+      - name: Install Behave
+        run: pip install behave requests
 
       - uses: actions/checkout@v1
 
