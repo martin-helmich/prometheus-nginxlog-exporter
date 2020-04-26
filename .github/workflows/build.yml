@@ -32,6 +32,7 @@ jobs:
   
   test_acceptance:
     name: Run acceptance tests
+    needs: build
     runs-on: ubuntu-latest
     container: python:3.7
 
