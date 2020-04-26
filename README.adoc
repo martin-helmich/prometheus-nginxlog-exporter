@@ -313,6 +313,67 @@ configuration file:
 
     $ docker run --name nginx-exporter -p 4040:4040 -v logs:/mnt/nginxlogs -v /path/to/config.hcl:/etc/prometheus-nginxlog-exporter.hcl quay.io/martinhelmich/prometheus-nginxlog-exporter -config-file /etc/prometheus-nginxlog-exporter.hcl
 
+### Kubernetes
+
+If you run a logfile-generating service (be it NGINX, or anything that generates similar access log files) in Kubernetes, you can run the exporter as a sidecar along your "main" container within the same pod.
+
+The following example shows you how to deploy the exporter as a sidecar, accepting logs from the main container via syslog:
+
+[source,yaml]
+----
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-example
+spec:
+  containers:
+    - name: web
+      image: nginx
+      # ...
+    - name: exporter
+      image: docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:v1
+      args: ["-config-file", "/etc/prometheus-nginxlog-exporter/config.hcl"]
+      volumeMounts:
+      - name: exporter-config
+        mountPath: /etc/prometheus-nginxlog-exporter
+  volumes:
+    - name: exporter-config
+      configMap:
+        name: exporter-config
+----
+
+In this example, the configuration file is passed via the `exporter-config` ConfigMap. This might look like follows:
+
+[source,yaml]
+----
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: exporter-config
+data:
+  config.hcl: |
+    listen {
+      port = 4040
+    }
+
+    namespace "nginx" {
+      source = {
+        syslog {
+          listen_address = "udp://127.0.0.1:5531"
+          format = "rfc3164"
+        }
+      }
+
+      format = "$remote_addr - $remote_user [$time_local] \"$request\" $status $body_bytes_sent \"$http_referer\" \"$http_user_agent\" \"$http_x_forwarded_for\""
+
+      labels {
+        app = "default"
+      }
+    }
+----
+
+The config file instructs the exporter to accept log input via syslog. To forward logs to the exporter, just instruct your main container to send its access logs via syslog to `127.0.0.1:5531` (which works, since the main container and the sidecar share their network namespace).
+
 == Frequently Asked Questions
 
 > I have started the exporter, but it is not exporting any application-specific metrics!
