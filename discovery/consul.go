@@ -1,7 +1,9 @@
 package discovery
 
-import "github.com/martin-helmich/prometheus-nginxlog-exporter/config"
-import "github.com/hashicorp/consul/api"
+import (
+	"github.com/hashicorp/consul/api"
+	"github.com/martin-helmich/prometheus-nginxlog-exporter/config"
+)
 
 // ConsulRegistrator is a helper struct that handles Consul service registration
 type ConsulRegistrator struct {
@@ -45,7 +47,7 @@ func NewConsulRegistrator(cfg *config.Config) (*ConsulRegistrator, error) {
 func (r *ConsulRegistrator) RegisterConsul() error {
 	registration := api.AgentServiceRegistration{
 		ID:      r.serviceID,
-		Address: getDefault(r.config.Consul.Service.Address, r.config.Listen.Address),
+		Address: r.config.Consul.Service.Address,
 		Port:    r.config.Listen.Port,
 		Name:    getDefault(r.config.Consul.Service.Name, "nginx-exporter"),
 		Tags:    r.config.Consul.Service.Tags,
