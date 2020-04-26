@@ -20,11 +20,11 @@ changelog:
 dockers:
   - dockerfile: .goreleaser.Dockerfile
     image_templates:
-    - quay.io/martin-helmich/prometheus-nginxlog-exporter:latest
-    - quay.io/martin-helmich/prometheus-nginxlog-exporter:stable
-    - quay.io/martin-helmich/prometheus-nginxlog-exporter:v{{ .Major }}
-    - quay.io/martin-helmich/prometheus-nginxlog-exporter:v{{ .Major }}.{{ .Minor }}
-    - quay.io/martin-helmich/prometheus-nginxlog-exporter:{{ .Tag }}
+    - quay.io/martinhelmich/prometheus-nginxlog-exporter:latest
+    - quay.io/martinhelmich/prometheus-nginxlog-exporter:stable
+    - quay.io/martinhelmich/prometheus-nginxlog-exporter:v{{ .Major }}
+    - quay.io/martinhelmich/prometheus-nginxlog-exporter:v{{ .Major }}.{{ .Minor }}
+    - quay.io/martinhelmich/prometheus-nginxlog-exporter:{{ .Tag }}
     binaries:
       - prometheus-nginxlog-exporter
     goos: linux
