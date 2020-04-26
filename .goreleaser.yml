@@ -1,0 +1,31 @@
+project_name: prometheus-nginxlog-exporter
+builds:
+  - env:
+      - CGO_ENABLED=0
+      - GO111MODULE=on
+    goos:
+      - linux
+    goarch:
+      - amd64
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ .Tag }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+dockers:
+  - dockerfile: .goreleaser.Dockerfile
+    image_templates:
+    - quay.io/martin-helmich/prometheus-nginxlog-exporter:latest
+    - quay.io/martin-helmich/prometheus-nginxlog-exporter:stable
+    - quay.io/martin-helmich/prometheus-nginxlog-exporter:v{{ .Major }}
+    - quay.io/martin-helmich/prometheus-nginxlog-exporter:v{{ .Major }}.{{ .Minor }}
+    - quay.io/martin-helmich/prometheus-nginxlog-exporter:{{ .Tag }}
+    binaries:
+      - prometheus-nginxlog-exporter
+    goos: linux
+    goarch: amd64

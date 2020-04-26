@@ -1,0 +1,69 @@
+name: Compile & Test
+
+on: [push]
+
+jobs:
+  build:
+    name: Compile binary
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Set up Go
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.13.x
+
+      - name: Compile
+        run: CGO_ENABLED=0 go build -a -installsuffix cgo -o prometheus-nginxlog-exporter .
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v1
+        with:
+          name: build
+          path: prometheus-nginxlog-exporter
+
+  tests_unit:
+    name: Run unit tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Set up Go
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.13.x
+
+      - name: Run unit tests
+        run: go test ./...
+  
+  test_acceptance:
+    name: Run acceptance tests
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: "3.7"
+
+      - name: Install Behave
+        run: pip install behave requests
+
+      - uses: actions/checkout@v1
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v1
+        with:
+          name: build
+
+      - name: Link built file to cwd
+        run: |
+          cp build/prometheus-nginxlog-exporter .
+          chmod +x ./prometheus-nginxlog-exporter
+      
+      - name: Run acceptance tests
+        run: behave
