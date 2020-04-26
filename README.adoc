@@ -12,6 +12,7 @@ image:https://img.shields.io/github/workflow/status/martin-helmich/prometheus-ng
 image:https://quay.io/repository/martinhelmich/prometheus-nginxlog-exporter/status[link="https://quay.io/repository/martinhelmich/prometheus-nginxlog-exporter",Docker Repository on Quay]
 image:https://goreportcard.com/badge/github.com/martin-helmich/prometheus-nginxlog-exporter[link="https://goreportcard.com/report/github.com/martin-helmich/prometheus-nginxlog-exporter", Go Report Card]
 image:https://img.shields.io/github/license/martin-helmich/prometheus-nginxlog-exporter[GitHub]
+image:https://img.shields.io/badge/donate-PayPal-yellow[link="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=SEARYHPVS9U5N&source=url", Donate]
 
 Helper tool that continuously reads an NGINX log file and exports metrics to https://prometheus.io/[Prometheus].
 
@@ -289,18 +290,36 @@ relabel "request_uri" {
 }
 ----
 
-Running the collector
----------------------
+Installing & running the collector
+----------------------------------
 
-### Systemd
+### DEB/RPM packages
 
-You can find an example unit file for this service https://github.com/martin-helmich/prometheus-nginxlog-exporter/blob/master/systemd/prometheus-nginxlog-exporter.service[in this repository]. Simply copy the unit file to `/etc/systemd/system`:
+In the https://github.com/martin-helmich/prometheus-nginxlog-exporter/releases[releases section],
+you can find both DEB and RPM packages for download. These come with a dependency on systemd and
+configure the exporter to be running automatically:
 
-    $ wget -O /etc/systemd/system/prometheus-nginxlog-exporter.service https://raw.githubusercontent.com/martin-helmich/prometheus-nginxlog-exporter/master/systemd/prometheus-nginxlog-exporter.service
+    $ wget https://github.com/martin-helmich/prometheus-nginxlog-exporter/releases/download/v1.5.0/prometheus-nginxlog-exporter_v1.5.0_linux_amd64.deb
+    $ apt install ./prometheus-nginxlog-exporter_v1.5.0_linux_amd64.deb
+
+The packages drop a configuration file to `/etc/prometheus-nginxlog-exporter.hcl` which you can
+adjust to your own needs.
+
+### Manual installation, with systemd
+
+If you do not want to use one of the pre-built packages, you can download the binary itself and
+manually configure systemd to start it. You can find an example unit file for this service
+https://github.com/martin-helmich/prometheus-nginxlog-exporter/blob/master/res/package/prometheus-nginxlog-exporter.service[in this repository].
+Simply copy the unit file to `/etc/systemd/system`:
+
+    $ wget -O /etc/systemd/system/prometheus-nginxlog-exporter.service https://raw.githubusercontent.com/martin-helmich/prometheus-nginxlog-exporter/master/res/package/prometheus-nginxlog-exporter.service
     $ systemctl enable prometheus-nginxlog-exporter
     $ systemctl start prometheus-nginxlog-exporter
 
-The shipped unit file expects the binary to be located in `/usr/local/bin/prometheus-nginxlog-exporter` and the configuration file in `/etc/prometheus-nginxlog-exporter.hcl`. Adjust to your own needs.
+The shipped unit file expects the binary to be located in `/usr/sbin/prometheus-nginxlog-exporter`
+(if you sideload the exporter without using your package manager, you might want to put it to
+`/usr/local`, instead) and the configuration file in `/etc/prometheus-nginxlog-exporter.hcl`. Adjust
+to your own needs.
 
 ### Docker
 
