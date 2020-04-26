@@ -4,6 +4,7 @@ on: [push]
 
 jobs:
   build:
+    name: Compile binary
     runs-on: ubuntu-latest
     container: golang:1.13
 
