@@ -1,0 +1,48 @@
+name: Compile & Test
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: golang:1.13
+
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Compile
+        run: CGO_ENABLED=0 go build -a -installsuffix cgo -o prometheus-nginxlog-exporter .
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v1
+        with:
+          name: build
+          path: prometheus-nginxlog-exporter
+
+  tests_unit:
+    name: Run unit tests
+    runs-on: ubuntu-latest
+    container: golang:1.13
+
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Run unit tests
+        run: go test ./...
+  
+  test_acceptance:
+    name: Run acceptance tests
+    runs-on: ubuntu-latest
+    container: python:3.7
+
+    steps:
+      - name: Install Behave
+        run: pip install behave requests
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v1
+        with:
+          name: build
+      
+      - name: Run acceptance tests
+        run: behave
