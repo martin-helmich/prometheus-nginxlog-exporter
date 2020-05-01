@@ -28,15 +28,21 @@ a configuration file with a more advanced configuration.
 
 Use the command-line:
 
-    ./prometheus-nginxlog-exporter \
-      -format="<FORMAT>" \
-      -listen-port=4040 \
-      -namespace=nginx \
-      [PATHS-TO-LOGFILES...]
+[source]
+----
+$ ./prometheus-nginxlog-exporter \
+  -format="<FORMAT>" \
+  -listen-port=4040 \
+  -namespace=nginx \
+  [PATHS-TO-LOGFILES...]
+----
 
 Use the configuration file:
 
-    ./prometheus-nginxlog-exporter -config-file /path/to/config.hcl
+[source]
+----
+$ ./prometheus-nginxlog-exporter -config-file /path/to/config.hcl
+----
 
 Installation
 ------------
@@ -58,12 +64,29 @@ recommend using the `v1` tag instead of `latest`.
 Run the exporter as follows (adjust paths like `/path/to/logs` and
 `/path/to/config` to your own needs):
 
-    $ docker run --name nginx-exporter -v /path/to/logs:/mnt/nginxlogs -p 4040:4040 quay.io/martinhelmich/prometheus-nginxlog-exporter mnt/nginxlogs/access.log
+[source]
+----
+$ docker run \
+    --name nginx-exporter \
+    -v /path/to/logs:/mnt/nginxlogs \
+    -p 4040:4040 \
+    quay.io/martinhelmich/prometheus-nginxlog-exporter \
+    mnt/nginxlogs/access.log
+----
 
 Command-line flags and arguments can simply be appended to the `docker run` command, for example to use a
 configuration file:
 
-    $ docker run --name nginx-exporter -p 4040:4040 -v /path/to/logs:/mnt/nginxlogs -v /path/to/config.hcl:/etc/prometheus-nginxlog-exporter.hcl quay.io/martinhelmich/prometheus-nginxlog-exporter -config-file /etc/prometheus-nginxlog-exporter.hcl
+[source]
+----
+$ docker run \
+    --name nginx-exporter \
+    -p 4040:4040 \
+    -v /path/to/logs:/mnt/nginxlogs \
+    -v /path/to/config.hcl:/etc/prometheus-nginxlog-exporter.hcl \
+    quay.io/martinhelmich/prometheus-nginxlog-exporter \
+    -config-file /etc/prometheus-nginxlog-exporter.hcl
+----
 
 === DEB and RPM packages
 

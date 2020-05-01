@@ -6,7 +6,6 @@ require (
 	github.com/creack/pty v1.1.9 // indirect
 	github.com/fsnotify/fsnotify v1.4.7 // indirect
 	github.com/go-logfmt/logfmt v0.5.0 // indirect
-	github.com/golang/protobuf v1.3.3 // indirect
 	github.com/google/gofuzz v1.1.0 // indirect
 	github.com/hashicorp/consul v0.0.0-20150921174127-de080672fee9
 	github.com/hashicorp/go-msgpack v0.5.3 // indirect
@@ -29,7 +28,6 @@ require (
 	golang.org/x/crypto v0.0.0-20200204104054-c9f3fb736b72 // indirect
 	golang.org/x/mod v0.2.0 // indirect
 	golang.org/x/net v0.0.0-20200202094626-16171245cfb2 // indirect
-	golang.org/x/sys v0.0.0-20200202164722-d101bd2416d5 // indirect
 	golang.org/x/text v0.3.2 // indirect
 	golang.org/x/tools v0.0.0-20200205141839-4abfd4a1628e // indirect
 	gopkg.in/fsnotify.v1 v1.4.7 // indirect
