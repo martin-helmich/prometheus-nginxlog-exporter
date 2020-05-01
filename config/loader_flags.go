@@ -4,8 +4,9 @@ package config
 // values from command-line flags.
 func LoadConfigFromFlags(config *Config, flags *StartupFlags) error {
 	config.Listen = ListenConfig{
-		Port:    flags.ListenPort,
-		Address: "0.0.0.0",
+		Port:            flags.ListenPort,
+		Address:         "0.0.0.0",
+		MetricsEndpoint: flags.MetricsEndpoint,
 	}
 	config.Namespaces = []NamespaceConfig{
 		{

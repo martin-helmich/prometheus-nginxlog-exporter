@@ -77,6 +77,7 @@ is expected to be either in https://github.com/hashicorp/hcl[HCL] or YAML format
 listen {
   port = 4040
   address = "10.1.2.3"
+  metrics_endpoint = "/metrics"
 }
 
 consul {
@@ -126,6 +127,7 @@ The same file as YAML file:
 listen:
   port: 4040
   address: "10.1.2.3"
+  metrics_endpoint: "/metrics"
 
 consul:
   enable: true

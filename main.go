@@ -133,8 +133,9 @@ func main() {
 	var opts config.StartupFlags
 	var cfg = config.Config{
 		Listen: config.ListenConfig{
-			Port:    4040,
-			Address: "0.0.0.0",
+			Port:            4040,
+			Address:         "0.0.0.0",
+			MetricsEndpoint: "/metrics",
 		},
 	}
 
@@ -145,6 +146,7 @@ func main() {
 	flag.BoolVar(&opts.EnableExperimentalFeatures, "enable-experimental", false, "Set this flag to enable experimental features")
 	flag.StringVar(&opts.CPUProfile, "cpuprofile", "", "write cpu profile to `file`")
 	flag.StringVar(&opts.MemProfile, "memprofile", "", "write memory profile to `file`")
+	flag.StringVar(&opts.MetricsEndpoint, "metrics-endpoint", cfg.Listen.MetricsEndpoint, "URL path at which to serve metrics")
 	flag.Parse()
 
 	opts.Filenames = flag.Args()

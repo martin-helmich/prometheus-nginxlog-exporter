@@ -1,5 +1,10 @@
 listen {
   port = 4040
+  
+  // "metrics_endpoint" can be used to configure an alternative metrics URL
+  // path. Default value is "/metrics".
+  //
+  //   metrics_endpoint = "/metrics"
 }
 
 consul {
