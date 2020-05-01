@@ -14,7 +14,7 @@ image:https://goreportcard.com/badge/github.com/martin-helmich/prometheus-nginxl
 image:https://img.shields.io/github/license/martin-helmich/prometheus-nginxlog-exporter[GitHub]
 image:https://img.shields.io/badge/donate-PayPal-yellow[link="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=SEARYHPVS9U5N&source=url", Donate]
 
-Helper tool that continuously reads an NGINX log file and exports metrics to https://prometheus.io/[Prometheus].
+Helper tool that continuously reads an NGINX log file (or any kind of similar log file) and exports metrics to https://prometheus.io/[Prometheus].
 
 [discrete]
 == Contents
@@ -37,6 +37,152 @@ Use the command-line:
 Use the configuration file:
 
     ./prometheus-nginxlog-exporter -config-file /path/to/config.hcl
+
+Installation
+------------
+
+There are multiple ways to install this exporter.
+
+=== Docker
+
+Docker images for this exporter are available at the quay.io and pkg.github.com
+registries:
+
+  - `quay.io/martinhelmich/prometheus-nginxlog-exporter:v1`
+  - `docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:v1`
+
+Have a look at the https://github.com/martin-helmich/prometheus-nginxlog-exporter/releases[releases page]
+to see the available versions and how to pull their images. In general, I would
+recommend using the `v1` tag instead of `latest`.
+
+Run the exporter as follows (adjust paths like `/path/to/logs` and
+`/path/to/config` to your own needs):
+
+    $ docker run --name nginx-exporter -v /path/to/logs:/mnt/nginxlogs -p 4040:4040 quay.io/martinhelmich/prometheus-nginxlog-exporter mnt/nginxlogs/access.log
+
+Command-line flags and arguments can simply be appended to the `docker run` command, for example to use a
+configuration file:
+
+    $ docker run --name nginx-exporter -p 4040:4040 -v /path/to/logs:/mnt/nginxlogs -v /path/to/config.hcl:/etc/prometheus-nginxlog-exporter.hcl quay.io/martinhelmich/prometheus-nginxlog-exporter -config-file /etc/prometheus-nginxlog-exporter.hcl
+
+=== DEB and RPM packages
+
+Each https://github.com/martin-helmich/prometheus-nginxlog-exporter/releases[release]
+from 1.5.1 or newer provides both DEB and RPM packages.
+
+    $ wget https://github.com/martin-helmich/prometheus-nginxlog-exporter/releases/download/v1.6.0/prometheus-nginxlog-exporter_1.6.0_linux_amd64.deb
+    $ apt install prometheus-nginxlog-exporter_1.6.0_linux_amd64.deb
+
+The package come with a dependency on systemd and configure the exporter to be
+running automatically:
+
+    $ systemctl status prometheus-nginxlog-exporter
+    $ # systemctl disable prometheus-nginxlog-exporter
+    $ # systemctl enable prometheus-nginxlog-exporter
+
+The packages drop a configuration file to `/etc/prometheus-nginxlog-exporter.hcl`
+which you can adjust to your own needs.
+
+### Manual installation, with systemd
+
+If you do not want to use one of the pre-built packages, you can download the
+binary itself and manually configure systemd to start it. You can find an
+example unit file for this service
+https://github.com/martin-helmich/prometheus-nginxlog-exporter/blob/master/res/package/prometheus-nginxlog-exporter.service[in this repository].
+Simply copy the unit file to `/etc/systemd/system`:
+
+    $ wget -O /etc/systemd/system/prometheus-nginxlog-exporter.service https://raw.githubusercontent.com/martin-helmich/prometheus-nginxlog-exporter/master/res/package/prometheus-nginxlog-exporter.service
+    $ systemctl enable prometheus-nginxlog-exporter
+    $ systemctl start prometheus-nginxlog-exporter
+
+The shipped unit file expects the binary to be located in
+`/usr/sbin/prometheus-nginxlog-exporter` (if you sideload the exporter without
+using your package manager, you might want to put it to `/usr/local`, instead)
+and the configuration file in `/etc/prometheus-nginxlog-exporter.hcl`. Adjust
+to your own needs.
+
+### Kubernetes
+
+If you run a logfile-generating service (be it NGINX, or anything that generates
+similar access log files) in Kubernetes, you can run the exporter as a sidecar
+along your "main" container within the same pod.
+
+The following example shows you how to deploy the exporter as a sidecar,
+accepting logs from the main container via syslog:
+
+[source,yaml]
+----
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-example
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "4040"
+spec:
+  containers:
+    - name: web
+      image: nginx
+      # ...
+    - name: exporter
+      image: docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:v1
+      args: ["-config-file", "/etc/prometheus-nginxlog-exporter/config.hcl"]
+      volumeMounts:
+      - name: exporter-config
+        mountPath: /etc/prometheus-nginxlog-exporter
+  volumes:
+    - name: exporter-config
+      configMap:
+        name: exporter-config
+----
+
+In this example, the configuration file is passed via the `exporter-config`
+ConfigMap. This might look like follows:
+
+[source,yaml]
+----
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: exporter-config
+data:
+  config.hcl: |
+    listen {
+      port = 4040
+    }
+
+    namespace "nginx" {
+      source = {
+        syslog {
+          listen_address = "udp://127.0.0.1:5531"
+          format = "rfc3164"
+        }
+      }
+
+      format = "$remote_addr - $remote_user [$time_local] \"$request\" $status $body_bytes_sent \"$http_referer\" \"$http_user_agent\" \"$http_x_forwarded_for\""
+
+      labels {
+        app = "default"
+      }
+    }
+----
+
+The config file instructs the exporter to accept log input via syslog. To
+forward logs to the exporter, just instruct your main container to send its
+access logs via syslog to `127.0.0.1:5531` (which works, since the main
+container and the sidecar share their network namespace).
+
+### Build from source
+
+To build the exporter from source, simply build it with `go get`:
+
+    $ go get github.com/martin-helmich/prometheus-nginxlog-exporter
+
+Alternatively, clone this repository and just run `go build`:
+
+    $ git clone git://github.com/martin-helmich/prometheus-nginxlog-exporter
+    $ cd prometheus-nginxlog-exporter
+    $ go build
 
 == Collected metrics
 
@@ -291,112 +437,6 @@ relabel "request_uri" {
   }
 }
 ----
-
-Installing & running the collector
-----------------------------------
-
-### DEB/RPM packages
-
-In the https://github.com/martin-helmich/prometheus-nginxlog-exporter/releases[releases section],
-you can find both DEB and RPM packages for download. These come with a dependency on systemd and
-configure the exporter to be running automatically:
-
-    $ wget https://github.com/martin-helmich/prometheus-nginxlog-exporter/releases/download/v1.5.0/prometheus-nginxlog-exporter_v1.5.0_linux_amd64.deb
-    $ apt install ./prometheus-nginxlog-exporter_v1.5.0_linux_amd64.deb
-
-The packages drop a configuration file to `/etc/prometheus-nginxlog-exporter.hcl` which you can
-adjust to your own needs.
-
-### Manual installation, with systemd
-
-If you do not want to use one of the pre-built packages, you can download the binary itself and
-manually configure systemd to start it. You can find an example unit file for this service
-https://github.com/martin-helmich/prometheus-nginxlog-exporter/blob/master/res/package/prometheus-nginxlog-exporter.service[in this repository].
-Simply copy the unit file to `/etc/systemd/system`:
-
-    $ wget -O /etc/systemd/system/prometheus-nginxlog-exporter.service https://raw.githubusercontent.com/martin-helmich/prometheus-nginxlog-exporter/master/res/package/prometheus-nginxlog-exporter.service
-    $ systemctl enable prometheus-nginxlog-exporter
-    $ systemctl start prometheus-nginxlog-exporter
-
-The shipped unit file expects the binary to be located in `/usr/sbin/prometheus-nginxlog-exporter`
-(if you sideload the exporter without using your package manager, you might want to put it to
-`/usr/local`, instead) and the configuration file in `/etc/prometheus-nginxlog-exporter.hcl`. Adjust
-to your own needs.
-
-### Docker
-
-You can also run this exporter from the Docker image `quay.io/martinhelmich/prometheus-nginxlog-exporter`:
-
-    $ docker run --name nginx-exporter -v logs:/mnt/nginxlogs -p 4040:4040 quay.io/martinhelmich/prometheus-nginxlog-exporter mnt/nginxlogs/access.log
-
-Command-line flags and arguments can simply be appended to the `docker run` command, for example to use a
-configuration file:
-
-    $ docker run --name nginx-exporter -p 4040:4040 -v logs:/mnt/nginxlogs -v /path/to/config.hcl:/etc/prometheus-nginxlog-exporter.hcl quay.io/martinhelmich/prometheus-nginxlog-exporter -config-file /etc/prometheus-nginxlog-exporter.hcl
-
-### Kubernetes
-
-If you run a logfile-generating service (be it NGINX, or anything that generates similar access log files) in Kubernetes, you can run the exporter as a sidecar along your "main" container within the same pod.
-
-The following example shows you how to deploy the exporter as a sidecar, accepting logs from the main container via syslog:
-
-[source,yaml]
-----
-apiVersion: v1
-kind: Pod
-metadata:
-  name: nginx-example
-  annotations:
-    prometheus.io/scrape: "true"
-    prometheus.io/port: "4040"
-spec:
-  containers:
-    - name: web
-      image: nginx
-      # ...
-    - name: exporter
-      image: docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:v1
-      args: ["-config-file", "/etc/prometheus-nginxlog-exporter/config.hcl"]
-      volumeMounts:
-      - name: exporter-config
-        mountPath: /etc/prometheus-nginxlog-exporter
-  volumes:
-    - name: exporter-config
-      configMap:
-        name: exporter-config
-----
-
-In this example, the configuration file is passed via the `exporter-config` ConfigMap. This might look like follows:
-
-[source,yaml]
-----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: exporter-config
-data:
-  config.hcl: |
-    listen {
-      port = 4040
-    }
-
-    namespace "nginx" {
-      source = {
-        syslog {
-          listen_address = "udp://127.0.0.1:5531"
-          format = "rfc3164"
-        }
-      }
-
-      format = "$remote_addr - $remote_user [$time_local] \"$request\" $status $body_bytes_sent \"$http_referer\" \"$http_user_agent\" \"$http_x_forwarded_for\""
-
-      labels {
-        app = "default"
-      }
-    }
-----
-
-The config file instructs the exporter to accept log input via syslog. To forward logs to the exporter, just instruct your main container to send its access logs via syslog to `127.0.0.1:5531` (which works, since the main container and the sidecar share their network namespace).
 
 == Frequently Asked Questions
 
