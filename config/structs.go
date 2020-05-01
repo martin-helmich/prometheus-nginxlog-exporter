@@ -9,6 +9,7 @@ type StartupFlags struct {
 	Namespace                  string
 	ListenPort                 int
 	EnableExperimentalFeatures bool
+	MetricsEndpoint            string
 
 	CPUProfile string
 	MemProfile string
@@ -29,8 +30,9 @@ type Config struct {
 
 // ListenConfig is a struct describing the built-in webserver configuration
 type ListenConfig struct {
-	Port    int
-	Address string
+	Port            int
+	Address         string
+	MetricsEndpoint string `hcl:"metrics_endpoint" yaml:"metrics_endpoint"`
 }
 
 // ConsulConfig describes the connection to a Consul server that the exporter should
