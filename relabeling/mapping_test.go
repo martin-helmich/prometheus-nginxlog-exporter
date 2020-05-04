@@ -49,4 +49,21 @@ func TestRequestURIMapping(t *testing.T) {
 	}
 
 	assertMapping(t, r, "GET /users/12345 HTTP/1.1", "/users/:id")
+	assertMapping(t, r, "GET /users/12345/about HTTP/1.1", "/users/:id")
+}
+
+func TestAgentMapping(t *testing.T) {
+	t.Parallel()
+
+	r, err := buildRelabeling(config.RelabelConfig{
+		Split: 0,
+		Matches: []config.RelabelValueMatch{
+			{RegexpString: "(Firefox)/(\\d+)\\.(\\d+)(pre|[ab]\\d+[a-z]*|)", Replacement: "$1"},
+		},
+	})
+	if err != nil {
+		t.Error(err)
+	}
+
+	assertMapping(t, r, "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:74.0) Gecko/20100101 Firefox/74.0", "Firefox")
 }

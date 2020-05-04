@@ -29,7 +29,9 @@ func (r *Relabeling) Map(sourceValue string) (string, error) {
 		replacement := ""
 		for i := range r.Matches {
 			if r.Matches[i].CompiledRegexp.MatchString(sourceValue) {
-				replacement = r.Matches[i].CompiledRegexp.ReplaceAllString(sourceValue, r.Matches[i].Replacement)
+				replacement = r.Matches[i].CompiledRegexp.ReplaceAllString(
+					r.Matches[i].CompiledRegexp.FindString(sourceValue),
+					r.Matches[i].Replacement)
 				break
 			}
 		}
