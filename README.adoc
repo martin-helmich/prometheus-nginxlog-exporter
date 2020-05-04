@@ -432,6 +432,8 @@ namespace "app1" {
 }
 ----
 
+If a match is found, the `replacement` replaces each occurrence of the corresponding match in the original value. Otherwise the processing continues to check the following match statements.
+
 The YAML configuration for relabelings works similar to the HCL configuration:
 
 [source,yaml]

@@ -49,4 +49,6 @@ func TestRequestURIMapping(t *testing.T) {
 	}
 
 	assertMapping(t, r, "GET /users/12345 HTTP/1.1", "/users/:id")
+	assertMapping(t, r, "GET /users/12345/about HTTP/1.1", "/users/:id/about")
+	assertMapping(t, r, "GET /v1/users/12345 HTTP/1.1", "")
 }
