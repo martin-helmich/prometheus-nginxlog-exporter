@@ -69,3 +69,13 @@ func (c *Config) StabilityWarnings() error {
 
 	return nil
 }
+
+// MetricsEndpointOrDefault returns the configured metrics endpoint or the
+// default value if no configuration was provided.
+func (l *ListenConfig) MetricsEndpointOrDefault() string {
+	if l.MetricsEndpoint == "" {
+		return "/metrics"
+	}
+
+	return l.MetricsEndpoint
+}

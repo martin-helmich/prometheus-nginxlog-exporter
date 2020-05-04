@@ -199,9 +199,11 @@ func main() {
 	}
 
 	listenAddr := fmt.Sprintf("%s:%d", cfg.Listen.Address, cfg.Listen.Port)
-	fmt.Printf("running HTTP server on address %s\n", listenAddr)
+	endpoint := cfg.Listen.MetricsEndpointOrDefault()
 
-	http.Handle(opts.MetricsEndpoint, promhttp.Handler())
+	fmt.Printf("running HTTP server on address %s, serving metrics at %s\n", listenAddr, endpoint)
+
+	http.Handle(endpoint, promhttp.Handler())
 
 	if err := http.ListenAndServe(listenAddr, nil); err != nil {
 		fmt.Printf("error while starting HTTP server: %s", err.Error())

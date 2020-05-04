@@ -72,10 +72,14 @@ def step_impl(context, port):
 
 
 @then(u'the exporter should report value {val} for metric {metric}')
-def step_impl(context, val, metric):
+@then(u'the exporter should on "{endpoint}" report value {val} for metric {metric}')
+def step_impl(context, val, metric, endpoint = '/metrics'):
+    endpoint = endpoint.lstrip("/")
     while True:
         try:
-            response = requests.get('http://localhost:4040/metrics')
+            url = 'http://localhost:4040/%s' % endpoint
+            print(url)
+            response = requests.get(url)
             text = response.text
             break
         except requests.ConnectionError:
@@ -83,4 +87,5 @@ def step_impl(context, val, metric):
 
     lines = [l.strip("\n") for l in text.split("\n")]
     if not "%s %s" % (metric, val) in lines:
-        raise AssertionError('expected metric "%s" could not be verified. Actual metrics:\n%s' % (context.text, text))
+        raise AssertionError('expected metric "%s" could not be verified. Actual metrics:\n%s' % (metric, text))
+
