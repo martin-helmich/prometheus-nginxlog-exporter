@@ -236,7 +236,8 @@ These metrics are exported:
 
 Additional labels can be configured in the configuration file (see below).
 
-<namespace> can be ommited or overrided - see <<Namespace-as-labels>>
+`<namespace>` can be omitted or overridden - see <<Namespace-as-labels>> for
+more information.
 
 == Configuration file
 
@@ -272,8 +273,9 @@ namespace "app1" {
       "/var/log/nginx/app1/access.log"
     ]
   }
-  #metrics_override = { prefix = "myprefix" }
-  #namespace_label = "vhost"
+
+  # metrics_override = { prefix = "myprefix" }
+  # namespace_label = "vhost"
 
   labels {
     app = "application-one"
@@ -321,9 +323,9 @@ namespaces:
     source:
       files:
         - /var/log/nginx/app1/access.log
-    #metrics_override:
-    #  prefix: "myprefix"
-    #namespace_label: "vhost"
+    # metrics_override:
+    #   prefix: "myprefix"
+    # namespace_label: "vhost"
     labels:
       app: "application-one"
       environment: "production"
@@ -340,7 +342,9 @@ Advanced features
 -----------------
 ### Namespace as labels
 
-It's more convinient to have same metrics across different
+For historic reasons, this exporter exports separate metrics for different
+namespaces (because the namespace is part of the metric name). However, in many
+(most) cases, it's more convenient to have the same metric name across different
 namespaces (with different log formats and names).
 
 This can be done in two steps:
@@ -374,11 +378,12 @@ myprefix_http_response_count_total{vhost="app2", ...}
 ----
 
 * `prefix` can be set to `""`, resulting metrics like `http_response_count_total{...}`
-* `namespace_label` can be ommited - so you have full control on metric format
+* `namespace_label` can be omitted - so you have full control on metric format
 
-Some details and history: https://github.com/martin-helmich/prometheus-nginxlog-exporter/issues/13[Issue #13]
+Some details and history on this can be found in https://github.com/martin-helmich/prometheus-nginxlog-exporter/issues/13[issue #13].
 
 ### Custom labels pass-through
+
 Partial case of <<Dynamic-re-labeling>>:
 
 [source,hcl]
