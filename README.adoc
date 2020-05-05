@@ -236,6 +236,8 @@ These metrics are exported:
 
 Additional labels can be configured in the configuration file (see below).
 
+<namespace> can be ommited or overrided - see <<Namespace-as-labels>>
+
 == Configuration file
 
 You can specify a configuration file to read at startup. The configuration file
@@ -270,6 +272,9 @@ namespace "app1" {
       "/var/log/nginx/app1/access.log"
     ]
   }
+  #metrics_override = { prefix = "myprefix" }
+  #namespace_label = "vhost"
+
   labels {
     app = "application-one"
     environment = "production"
@@ -316,6 +321,9 @@ namespaces:
     source:
       files:
         - /var/log/nginx/app1/access.log
+    #metrics_override:
+    #  prefix: "myprefix"
+    #namespace_label: "vhost"
     labels:
       app: "application-one"
       environment: "production"
@@ -330,6 +338,61 @@ namespaces:
 
 Advanced features
 -----------------
+### Namespace as labels
+
+It's more convinient to have same metrics across different
+namespaces (with different log formats and names).
+
+This can be done in two steps:
+
+1. Override Prometheus metrics namespace to some common prefix (`metrics_override`)
+2. Set label name for nginxlog-exporter's config namespace (`namespace_label`)
+
+[source,hcl]
+----
+namespace "app1" {
+  ...
+  metrics_override = { prefix = "myprefix" }
+  namespace_label = "vhost"
+  ...
+}
+
+namespace "app2" {
+  ...
+  metrics_override = { prefix = "myprefix" }
+  namespace_label = "vhost"
+  ...
+}
+----
+
+Exported metrics will have the following format:
+[source]
+----
+myprefix_http_response_count_total{vhost="app1", ...}
+myprefix_http_response_count_total{vhost="app2", ...}
+...
+----
+
+* `prefix` can be set to `""`, resulting metrics like `http_response_count_total{...}`
+* `namespace_label` can be ommited - so you have full control on metric format
+
+Some details and history: https://github.com/martin-helmich/prometheus-nginxlog-exporter/issues/13[Issue #13]
+
+### Custom labels pass-through
+Partial case of <<Dynamic-re-labeling>>:
+
+[source,hcl]
+----
+namespace "app1" {
+  format = "$remote_addr - $remote_user [$time_local] ... \"$geoip_country_code\" $upstream_addr"
+  ...
+  relabel "upstream_addr" { from = "upstream_addr" }
+  relabel "country" { from = "geoip_country_code" }
+  ...
+}
+----
+
+Exported metrics will have `upstream_addr` and `country` labels.
 
 ### Log sources
 

@@ -38,6 +38,29 @@ import (
 	"github.com/satyrius/gonx"
 )
 
+type NSMetrics struct {
+	cfg      *config.NamespaceConfig
+	registry *prometheus.Registry
+	Metrics
+}
+
+func NewNSMetrics(cfg *config.NamespaceConfig) *NSMetrics {
+	m := &NSMetrics{
+		cfg:      cfg,
+		registry: prometheus.NewRegistry(),
+	}
+	m.Init(cfg)
+
+	m.registry.MustRegister(m.countTotal)
+	m.registry.MustRegister(m.bytesTotal)
+	m.registry.MustRegister(m.upstreamSeconds)
+	m.registry.MustRegister(m.upstreamSecondsHist)
+	m.registry.MustRegister(m.responseSeconds)
+	m.registry.MustRegister(m.responseSecondsHist)
+	m.registry.MustRegister(m.parseErrorsTotal)
+	return m
+}
+
 // Metrics is a struct containing pointers to all metrics that should be
 // exposed to Prometheus
 type Metrics struct {
@@ -76,57 +99,56 @@ func (m *Metrics) Init(cfg *config.NamespaceConfig) {
 	}
 
 	m.countTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Namespace: cfg.Name,
-		Name:      "http_response_count_total",
-		Help:      "Amount of processed HTTP requests",
+		Namespace:   cfg.NamespacePrefix,
+		ConstLabels: cfg.NamespaceLabels,
+		Name:        "http_response_count_total",
+		Help:        "Amount of processed HTTP requests",
 	}, labels)
 
 	m.bytesTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Namespace: cfg.Name,
-		Name:      "http_response_size_bytes",
-		Help:      "Total amount of transferred bytes",
+		Namespace:   cfg.NamespacePrefix,
+		ConstLabels: cfg.NamespaceLabels,
+		Name:        "http_response_size_bytes",
+		Help:        "Total amount of transferred bytes",
 	}, labels)
 
 	m.upstreamSeconds = prometheus.NewSummaryVec(prometheus.SummaryOpts{
-		Namespace:  cfg.Name,
-		Name:       "http_upstream_time_seconds",
-		Help:       "Time needed by upstream servers to handle requests",
-		Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
+		Namespace:   cfg.NamespacePrefix,
+		ConstLabels: cfg.NamespaceLabels,
+		Name:        "http_upstream_time_seconds",
+		Help:        "Time needed by upstream servers to handle requests",
+		Objectives:  map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
 	}, labels)
 
 	m.upstreamSecondsHist = prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Namespace: cfg.Name,
-		Name:      "http_upstream_time_seconds_hist",
-		Help:      "Time needed by upstream servers to handle requests",
-		Buckets:   cfg.HistogramBuckets,
+		Namespace:   cfg.NamespacePrefix,
+		ConstLabels: cfg.NamespaceLabels,
+		Name:        "http_upstream_time_seconds_hist",
+		Help:        "Time needed by upstream servers to handle requests",
+		Buckets:     cfg.HistogramBuckets,
 	}, labels)
 
 	m.responseSeconds = prometheus.NewSummaryVec(prometheus.SummaryOpts{
-		Namespace: cfg.Name,
-		Name:      "http_response_time_seconds",
-		Help:      "Time needed by NGINX to handle requests",
+		Namespace:   cfg.NamespacePrefix,
+		ConstLabels: cfg.NamespaceLabels,
+		Name:        "http_response_time_seconds",
+		Help:        "Time needed by NGINX to handle requests",
 	}, labels)
 
 	m.responseSecondsHist = prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Namespace: cfg.Name,
-		Name:      "http_response_time_seconds_hist",
-		Help:      "Time needed by NGINX to handle requests",
-		Buckets:   cfg.HistogramBuckets,
+		Namespace:   cfg.NamespacePrefix,
+		ConstLabels: cfg.NamespaceLabels,
+		Name:        "http_response_time_seconds_hist",
+		Help:        "Time needed by NGINX to handle requests",
+		Buckets:     cfg.HistogramBuckets,
 	}, labels)
 
 	m.parseErrorsTotal = prometheus.NewCounter(prometheus.CounterOpts{
-		Namespace: cfg.Name,
-		Name:      "parse_errors_total",
-		Help:      "Total number of log file lines that could not be parsed",
+		Namespace:   cfg.NamespacePrefix,
+		ConstLabels: cfg.NamespaceLabels,
+		Name:        "parse_errors_total",
+		Help:        "Total number of log file lines that could not be parsed",
 	})
-
-	prometheus.MustRegister(m.countTotal)
-	prometheus.MustRegister(m.bytesTotal)
-	prometheus.MustRegister(m.upstreamSeconds)
-	prometheus.MustRegister(m.upstreamSecondsHist)
-	prometheus.MustRegister(m.responseSeconds)
-	prometheus.MustRegister(m.responseSecondsHist)
-	prometheus.MustRegister(m.parseErrorsTotal)
 }
 
 func main() {
@@ -138,6 +160,7 @@ func main() {
 			MetricsEndpoint: "/metrics",
 		},
 	}
+	nsGatherers := make(prometheus.Gatherers, 0)
 
 	flag.IntVar(&opts.ListenPort, "listen-port", 4040, "HTTP port to listen on")
 	flag.StringVar(&opts.Format, "format", `$remote_addr - $remote_user [$time_local] "$request" $status $body_bytes_sent "$http_referer" "$http_user_agent" "$http_x_forwarded_for"`, "NGINX access log format")
@@ -193,9 +216,11 @@ func main() {
 	}
 
 	for _, ns := range cfg.Namespaces {
-		fmt.Printf("starting listener for namespace %s\n", ns.Name)
+		nsMetrics := NewNSMetrics(&ns)
+		nsGatherers = append(nsGatherers, nsMetrics.registry)
 
-		go processNamespace(ns)
+		fmt.Printf("starting listener for namespace %s\n", ns.Name)
+		go processNamespace(ns, &(nsMetrics.Metrics))
 	}
 
 	listenAddr := fmt.Sprintf("%s:%d", cfg.Listen.Address, cfg.Listen.Port)
@@ -203,7 +228,11 @@ func main() {
 
 	fmt.Printf("running HTTP server on address %s, serving metrics at %s\n", listenAddr, endpoint)
 
-	http.Handle(endpoint, promhttp.Handler())
+	nsHandler := promhttp.InstrumentMetricHandler(
+		prometheus.DefaultRegisterer, promhttp.HandlerFor(nsGatherers, promhttp.HandlerOpts{}),
+	)
+
+	http.Handle(endpoint, nsHandler)
 
 	if err := http.ListenAndServe(listenAddr, nil); err != nil {
 		fmt.Printf("error while starting HTTP server: %s", err.Error())
@@ -246,13 +275,10 @@ func setupConsul(cfg *config.Config, stopChan <-chan bool, stopHandlers *sync.Wa
 	stopHandlers.Add(1)
 }
 
-func processNamespace(nsCfg config.NamespaceConfig) {
+func processNamespace(nsCfg config.NamespaceConfig, metrics *Metrics) {
 	var followers []tail.Follower
 
 	parser := gonx.NewParser(nsCfg.Format)
-
-	metrics := Metrics{}
-	metrics.Init(&nsCfg)
 
 	for _, f := range nsCfg.SourceData.Files {
 		t, err := tail.NewFileFollower(f)
@@ -291,7 +317,7 @@ func processNamespace(nsCfg config.NamespaceConfig) {
 	}
 
 	for _, f := range followers {
-		go processSource(nsCfg, f, parser, &metrics)
+		go processSource(nsCfg, f, parser, metrics)
 	}
 
 }

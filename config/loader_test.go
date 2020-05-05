@@ -122,6 +122,8 @@ func assertConfigContents(t *testing.T, cfg Config) {
 	assert.Equal(t, []string{"test.log", "foo.log"}, n.SourceFiles)
 	assert.Equal(t, FileSource{"test.log", "foo.log"}, n.SourceData.Files)
 	assert.Equal(t, "magicapp", n.Labels["app"])
+	assert.Nil(t, n.NamespaceLabels)
+	assert.Nil(t, n.MetricsOverride)
 
 	require.Len(t, n.RelabelConfigs, 2)
 	assert.Equal(t, "user", n.RelabelConfigs[0].TargetLabel)
@@ -151,4 +153,121 @@ func TestLoadsYAMLConfigFile(t *testing.T) {
 	err := LoadConfigFromStream(&cfg, buf, TypeYAML)
 	assert.Nil(t, err, "unexpected error: %v", err)
 	assertConfigContents(t, cfg)
+}
+
+const HCLLabeledInput = `
+listen {
+  address = "10.0.0.1"
+  port = 4040
+}
+enable_experimental = true
+
+namespace "default" {
+  source_files = [
+    "access.log"
+  ]
+  format = "$remote_addr - $remote_user [$time_local] \"$request\" $status $body_bytes_sent \"$http_referer\" \"$http_user_agent\" \"$http_x_forwarded_for\""
+
+  metrics_override = { prefix = "nginxlog" }
+}
+
+namespace "myapp1" {
+  source_files = [
+    "myapp1-access.log"
+  ]
+  format = "$remote_addr - $remote_user [$time_local] \"$request\" $status $body_bytes_sent \"$http_referer\" \"$http_user_agent\" \"$http_x_forwarded_for\""
+
+  metrics_override = { prefix = "" }
+  namespace_label = "vhost"
+}
+
+namespace "myapp2" {
+  source_files = [
+    "myapp2-access.log"
+  ]
+  format = "$remote_addr - $remote_user [$time_local] \"$request\" $status $body_bytes_sent \"$http_referer\" \"$http_user_agent\" \"$http_x_forwarded_for\""
+
+  metrics_override = { prefix = "" }
+  namespace_label = "vhost"
+}
+`
+
+const YAMLLabeledInput = `
+listen:
+  address: "10.0.0.1"
+  port: 4040
+enable_experimental: true
+
+namespaces:
+  - name: default
+    source_files:
+      - access.log
+    format: "$remote_addr - $remote_user [$time_local] \"$request\" $status $body_bytes_sent \"$http_referer\" \"$http_user_agent\" \"$http_x_forwarded_for\""
+    metrics_override:
+      prefix: "nginxlog"
+
+  - name: myapp1
+    source_files:
+      - myapp1-access.log
+    format: "$remote_addr - $remote_user [$time_local] \"$request\" $status $body_bytes_sent \"$http_referer\" \"$http_user_agent\" \"$http_x_forwarded_for\""
+    metrics_override:
+      prefix: ""
+    namespace_label: "vhost"
+
+  - name: myapp2
+    source_files:
+      - myapp2-access.log
+    format: "$remote_addr - $remote_user [$time_local] \"$request\" $status $body_bytes_sent \"$http_referer\" \"$http_user_agent\" \"$http_x_forwarded_for\""
+    metrics_override:
+      prefix: ""
+    namespace_label: "vhost"
+`
+
+func assertLabeledConfigContents(t *testing.T, cfg Config) {
+	assert.Equal(t, "10.0.0.1", cfg.Listen.Address)
+	assert.Equal(t, 4040, cfg.Listen.Port)
+
+	require.Len(t, cfg.Namespaces, 3)
+
+	for i, n := range cfg.Namespaces {
+		err := n.Compile()
+		assert.Nil(t, err, "unexpected error: %v", err)
+
+		switch i {
+		case 0:
+			assert.Equal(t, "default", n.Name)
+			assert.Equal(t, "nginxlog", n.NamespacePrefix)
+			assert.Nil(t, n.NamespaceLabels)
+		case 1:
+			assert.Equal(t, "myapp1", n.Name)
+			assert.Equal(t, "", n.NamespacePrefix)
+			assert.Equal(t, map[string]string{"vhost": "myapp1"}, n.NamespaceLabels)
+		case 2:
+			assert.Equal(t, "myapp2", n.Name)
+			assert.Equal(t, "", n.NamespacePrefix)
+			assert.Equal(t, map[string]string{"vhost": "myapp2"}, n.NamespaceLabels)
+		}
+	}
+}
+
+func TestLoadsNSLabeledHCLConfigFile(t *testing.T) {
+	t.Parallel()
+
+	buf := bytes.NewBufferString(HCLLabeledInput)
+	cfg := Config{}
+
+	err := LoadConfigFromStream(&cfg, buf, TypeHCL)
+	assert.Nil(t, err, "unexpected error: %v", err)
+	assertLabeledConfigContents(t, cfg)
+}
+
+func TestLoadsNSLabeledYAMLConfigFile(t *testing.T) {
+	t.Parallel()
+
+	buf := bytes.NewBufferString(YAMLLabeledInput)
+	cfg := Config{}
+
+	err := LoadConfigFromStream(&cfg, buf, TypeYAML)
+	assert.Nil(t, err, "unexpected error: %v", err)
+	assertLabeledConfigContents(t, cfg)
 }
