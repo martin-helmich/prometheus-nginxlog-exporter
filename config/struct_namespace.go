@@ -7,7 +7,16 @@ import (
 
 // NamespaceConfig is a struct describing single metric namespaces
 type NamespaceConfig struct {
-	Name             string            `hcl:",key"`
+	Name string `hcl:",key"`
+
+	NamespaceLabelName string `hcl:"namespace_label" yaml:"namespace_label"`
+	NamespaceLabels    map[string]string
+
+	MetricsOverride *struct {
+		Prefix string `hcl:"prefix" yaml:"prefix"`
+	} `hcl:"metrics_override" yaml:"metrics_override"`
+	NamespacePrefix string
+
 	SourceFiles      []string          `hcl:"source_files" yaml:"source_files"`
 	SourceData       SourceData        `hcl:"source" yaml:"source"`
 	Format           string            `hcl:"format"`
@@ -77,8 +86,16 @@ func (c *NamespaceConfig) Compile() error {
 			return nil
 		}
 	}
+	if c.NamespaceLabelName != "" {
+		c.NamespaceLabels = make(map[string]string)
+		c.NamespaceLabels[c.NamespaceLabelName] = c.Name
+	}
 
 	c.OrderLabels()
+	c.NamespacePrefix = c.Name
+	if c.MetricsOverride != nil {
+		c.NamespacePrefix = c.MetricsOverride.Prefix
+	}
 
 	return nil
 }
