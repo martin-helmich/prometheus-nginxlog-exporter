@@ -19,6 +19,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/martin-helmich/prometheus-nginxlog-exporter/docker"
 	"net/http"
 	"os"
 	"os/signal"
@@ -314,6 +315,20 @@ func processNamespace(nsCfg config.NamespaceConfig, metrics *Metrics) {
 
 			followers = append(followers, t)
 		}
+	}
+
+	if nsCfg.SourceData.Docker != nil {
+		r, err := docker.NewDockerLogReader(nsCfg.SourceData.Docker.ContainerName)
+		if err != nil {
+			panic(err)
+		}
+
+		t, err := tail.NewReaderFollower(r)
+		if err != nil {
+			panic(err)
+		}
+
+		followers = append(followers, t)
 	}
 
 	for _, f := range followers {

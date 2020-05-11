@@ -31,6 +31,7 @@ type NamespaceConfig struct {
 type SourceData struct {
 	Files  FileSource    `hcl:"files" yaml:"files"`
 	Syslog *SyslogSource `hcl:"syslog" yaml:"syslog"`
+	Docker *DockerSource `hcl:"docker" yaml:"docker"`
 }
 
 type FileSource []string
@@ -41,11 +42,19 @@ type SyslogSource struct {
 	Tags          []string `hcl:"tags" yaml:"tags"`
 }
 
+type DockerSource struct {
+	ContainerName string `hcl:"container" yaml:"container"`
+}
+
 // StabilityWarnings tests if the NamespaceConfig uses any configuration settings
 // that are not yet declared "stable"
 func (c *NamespaceConfig) StabilityWarnings() error {
 	if len(c.RelabelConfigs) > 0 {
 		return errors.New("you are using the 'relabel' configuration parameter")
+	}
+
+	if c.SourceData.Docker != nil {
+		return errors.New("you are using the 'docker' log source")
 	}
 
 	return nil

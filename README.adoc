@@ -444,6 +444,40 @@ namespace "test" {
 
 Have a look at http://nginx.org/en/docs/syslog.html[the respective section of the NGINX documentation] on how to set up NGINX to log into syslog.
 
+#### Reading from Docker logs
+
+If Nginx is running in a docker container and is configured to log to `/dev/stdout` and `/dev/stderr` (this is the 
+default configuration of the official `nginx` image), then you can export logs using Docker's default logging driver if 
+experimental features are enabled. To do this use a source configuration as follows:
+
+[source,hcl]
+----
+namespace "test" {
+  source {
+    docker {
+      container = "nginx_container_name"
+    }
+
+    // ...
+  }
+}
+----
+
+The host's docker socket needs to be mounted to the container. For example, if using the docker run command:
+
+[source]
+----
+$ docker run \
+    --name nginx-exporter \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    -v /path/to/config.hcl:/etc/prometheus-nginxlog-exporter.hcl \
+    -p 4040:4040 \
+    quay.io/martinhelmich/prometheus-nginxlog-exporter \
+    -config-file /etc/prometheus-nginxlog-exporter.hcl \
+    -enable-experimental
+---- 
+
+
 Experimental features
 ---------------------
 
