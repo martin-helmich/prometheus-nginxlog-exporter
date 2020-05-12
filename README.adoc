@@ -531,7 +531,7 @@ relabel "request_uri" {
 }
 ----
 
-#### Reading from Docker logs
+### Reading from Docker logs
 
 If Nginx is running in a docker container and is configured to log to `/dev/stdout` and `/dev/stderr` (this is the
 default configuration of the official `nginx` image), then you can export logs using Docker's default logging driver.
