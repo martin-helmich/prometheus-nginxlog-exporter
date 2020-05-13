@@ -492,6 +492,9 @@ namespace "app1" {
     from = "request"
     split = 2
 
+    // if enabled, only include label in response count metric (default is false)
+    only_counter = false
+
     match "^/users/[0-9]+" {
       replacement = "/users/:id"
     }

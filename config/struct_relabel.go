@@ -13,6 +13,7 @@ type RelabelConfig struct {
 	Whitelist   []string            `hcl:"whitelist"`
 	Matches     []RelabelValueMatch `hcl:"match"`
 	Split       int                 `hcl:"split"`
+	OnlyCounter bool                `hcl:"only_counter" yaml:"only_counter"`
 
 	WhitelistExists bool
 	WhitelistMap    map[string]interface{}
