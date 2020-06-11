@@ -24,6 +24,8 @@ type NamespaceConfig struct {
 	RelabelConfigs   []RelabelConfig   `hcl:"relabel" yaml:"relabel_configs"`
 	HistogramBuckets []float64         `hcl:"histogram_buckets" yaml:"histogram_buckets"`
 
+	PrintLog bool `hcl:"print_log" yaml:"print_log"`
+
 	OrderedLabelNames  []string
 	OrderedLabelValues []string
 }

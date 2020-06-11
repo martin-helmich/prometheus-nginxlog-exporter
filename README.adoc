@@ -274,6 +274,9 @@ namespace "app1" {
     ]
   }
 
+  # log can be printed to std out, e.g. for debugging purposes (disabled by default)
+  print_log = false
+
   # metrics_override = { prefix = "myprefix" }
   # namespace_label = "vhost"
 

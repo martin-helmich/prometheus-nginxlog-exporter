@@ -339,6 +339,10 @@ func processSource(nsCfg config.NamespaceConfig, t tail.Follower, parser *gonx.P
 	}
 
 	for line := range t.Lines() {
+		if nsCfg.PrintLog {
+			fmt.Println(line)
+		}
+
 		entry, err := parser.ParseString(line)
 		if err != nil {
 			fmt.Printf("error while parsing line '%s': %s\n", line, err)
