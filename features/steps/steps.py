@@ -1,12 +1,14 @@
-from behave import *
+import logging
 import subprocess
 import time
+
 import requests
-import logging
+from behave import *
 
 formats = {
     "default": '$remote_addr - $remote_user [$time_local] "$request" $status $body_bytes_sent "$http_referer" "$http_user_agent" "$http_x_forwarded_for"',
-    "upstream-time": '$remote_addr - $remote_user [$time_local] "$request" $status $body_bytes_sent "$http_referer" "$http_user_agent" "$http_x_forwarded_for" $upstream_response_time'
+    "upstream-time": '$remote_addr - $remote_user [$time_local] "$request" $status $body_bytes_sent "$http_referer" "$http_user_agent" "$http_x_forwarded_for" $upstream_response_time',
+    "request-time": '$remote_addr - $remote_user [$time_local] "$request" $status $body_bytes_sent "$http_referer" "$http_user_agent" "$http_x_forwarded_for" $request_time'
 }
 
 bin_name = './prometheus-nginxlog-exporter'
@@ -20,7 +22,8 @@ def run_exporter_impl(context, filename):
     time.sleep(.5)
 
     if p.returncode is not None:
-        raise Exception('exporter exited too soon with exit code %d' % p.returncode)
+        raise Exception(
+            'exporter exited too soon with exit code %d' % p.returncode)
 
     context.process = p
 
@@ -33,9 +36,11 @@ def run_exporter_impl(context, filename, format):
     time.sleep(.5)
 
     if p.returncode is not None:
-        raise Exception('exporter exited too soon with exit code %d' % p.returncode)
+        raise Exception(
+            'exporter exited too soon with exit code %d' % p.returncode)
 
     context.process = p
+
 
 @given(u'a running exporter listening with configuration file "{config}"')
 def run_exporter_configfile_impl(context, config):
@@ -44,9 +49,11 @@ def run_exporter_configfile_impl(context, config):
     time.sleep(.5)
 
     if p.returncode is not None:
-        raise Exception('exporter exited too soon with exit code %d' % p.returncode)
+        raise Exception(
+            'exporter exited too soon with exit code %d' % p.returncode)
 
     context.process = p
+
 
 @when(u'the following HTTP request is logged to "{filename}"')
 @when(u'the following HTTP requests are logged to "{filename}"')
@@ -61,19 +68,20 @@ def step_impl(context, filename):
 @when(u'the following HTTP requests are logged to syslog on port {port}')
 def step_impl(context, port):
     log = logging.getLogger('test')
-    log_handler = logging.handlers.SysLogHandler(("localhost", int(port)), logging.handlers.SysLogHandler.LOG_USER)
+    log_handler = logging.handlers.SysLogHandler(
+        ("localhost", int(port)), logging.handlers.SysLogHandler.LOG_USER)
     log.addHandler(log_handler)
 
     lines = [l for l in context.text.split("\n") if l != ""]
     for l in lines:
         log.info(l)
-    
+
     time.sleep(.5)
 
 
 @then(u'the exporter should report value {val} for metric {metric}')
 @then(u'the exporter should on "{endpoint}" report value {val} for metric {metric}')
-def step_impl(context, val, metric, endpoint = '/metrics'):
+def step_impl(context, val, metric, endpoint='/metrics'):
     endpoint = endpoint.lstrip("/")
     while True:
         try:
@@ -87,5 +95,5 @@ def step_impl(context, val, metric, endpoint = '/metrics'):
 
     lines = [l.strip("\n") for l in text.split("\n")]
     if not "%s %s" % (metric, val) in lines:
-        raise AssertionError('expected metric "%s" could not be verified. Actual metrics:\n%s' % (metric, text))
-
+        raise AssertionError(
+            'expected metric "%s" could not be verified. Actual metrics:\n%s' % (metric, text))
