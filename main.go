@@ -133,6 +133,7 @@ func (m *Metrics) Init(cfg *config.NamespaceConfig) {
 		ConstLabels: cfg.NamespaceLabels,
 		Name:        "http_response_time_seconds",
 		Help:        "Time needed by NGINX to handle requests",
+		Objectives:  map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
 	}, labels)
 
 	m.responseSecondsHist = prometheus.NewHistogramVec(prometheus.HistogramOpts{
