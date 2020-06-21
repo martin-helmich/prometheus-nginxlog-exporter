@@ -39,6 +39,7 @@ nfpms:
     homepage: https://github.com/martin-helmich/prometheus-nginxlog-exporter
     description: Export Prometheus metrics from NGINX (or compatible) log files
     license: Apache 2.0
+    maintainer: Martin Helmich <martin@helmich.me>
     formats:
       - deb
       - rpm
