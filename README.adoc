@@ -491,6 +491,7 @@ namespace "app1" {
   relabel "request_uri" {
     from = "request"
     split = 2
+    separator = " " // <1>
 
     match "^/users/[0-9]+" {
       replacement = "/users/:id"
@@ -502,6 +503,7 @@ namespace "app1" {
   }
 }
 ----
+<1> The `separator` property is optional; if omitted, the space character (`" "`) will be assumed as separator.
 
 If a match is found, the `replacement` replaces each occurrence of the corresponding match in the original value. Otherwise the processing continues to check the following match statements.
 
@@ -515,6 +517,7 @@ namespaces:
   - target_label: request_uri
     from: request
     split: 2
+    separator: ' '
     matches:
     - regexp: "^/users/[0-9]+"
       replacement: "/users/:id"

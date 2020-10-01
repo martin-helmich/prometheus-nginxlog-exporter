@@ -13,6 +13,7 @@ type RelabelConfig struct {
 	Whitelist   []string            `hcl:"whitelist"`
 	Matches     []RelabelValueMatch `hcl:"match"`
 	Split       int                 `hcl:"split"`
+	Separator   string              `hcl:"separator"`
 
 	WhitelistExists bool
 	WhitelistMap    map[string]interface{}
