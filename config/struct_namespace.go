@@ -46,10 +46,6 @@ type SyslogSource struct {
 // StabilityWarnings tests if the NamespaceConfig uses any configuration settings
 // that are not yet declared "stable"
 func (c *NamespaceConfig) StabilityWarnings() error {
-	if len(c.RelabelConfigs) > 0 {
-		return errors.New("you are using the 'relabel' configuration parameter")
-	}
-
 	return nil
 }
 
