@@ -8,7 +8,12 @@ import (
 // config (matching against whitelists, regular expressions etc.)
 func (r *Relabeling) Map(sourceValue string) (string, error) {
 	if r.Split > 0 {
-		values := strings.Split(sourceValue, " ")
+		separator := r.Separator
+		if separator == "" {
+			separator = " "
+		}
+
+		values := strings.Split(sourceValue, separator)
 
 		if len(values) >= r.Split {
 			sourceValue = values[r.Split-1]
