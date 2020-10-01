@@ -447,14 +447,6 @@ namespace "test" {
 
 Have a look at http://nginx.org/en/docs/syslog.html[the respective section of the NGINX documentation] on how to set up NGINX to log into syslog.
 
-Experimental features
----------------------
-
-The exporter contains features that are currently experimental and may change without prior notice.
-To use these features, either set the `-enable-experimental` flag or add a `enable_experimental`
-option to your configuration file (on the root of the configuration file document, like
-`enable_experimental: true` in YAML or `enable_experimental = true` in HCL).
-
 ### Dynamic re-labeling
 
 Re-labeling lets you add arbitrary fields from the parsed log line as labels to your metrics.
