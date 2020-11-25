@@ -4,14 +4,13 @@ require (
 	github.com/armon/go-metrics v0.3.4 // indirect
 	github.com/fsnotify/fsnotify v1.4.7 // indirect
 	github.com/google/btree v1.0.0 // indirect
-	github.com/hashicorp/consul/api v1.7.0
+	github.com/hashicorp/consul/api v1.8.0
 	github.com/hashicorp/go-immutable-radix v1.2.0 // indirect
 	github.com/hashicorp/go-msgpack v0.5.5 // indirect
 	github.com/hashicorp/go-sockaddr v1.0.2 // indirect
 	github.com/hashicorp/go-uuid v1.0.2 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/hashicorp/hcl v1.0.0
-	github.com/hashicorp/serf v0.9.4 // indirect
 	github.com/hpcloud/tail v1.0.0
 	github.com/mitchellh/go-testing-interface v1.14.0 // indirect
 	github.com/mitchellh/mapstructure v1.3.3 // indirect
