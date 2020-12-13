@@ -1,4 +1,7 @@
 contact_links:
+  - name: Support request
+    url: https://github.com/martin-helmich/prometheus-nginxlog-exporter/discussions/new
+    about: Need help with something that isn't a bug or a missing feature?
   - name: Frequently Asked Questions
     url: https://github.com/martin-helmich/prometheus-nginxlog-exporter#frequently-asked-questions
     about: Please check if your issue already has an answer here
