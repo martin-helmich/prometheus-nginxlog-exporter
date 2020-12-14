@@ -93,8 +93,8 @@ $ docker run \
 Each https://github.com/martin-helmich/prometheus-nginxlog-exporter/releases[release]
 from 1.5.1 or newer provides both DEB and RPM packages.
 
-    $ wget https://github.com/martin-helmich/prometheus-nginxlog-exporter/releases/download/v1.6.0/prometheus-nginxlog-exporter_1.6.0_linux_amd64.deb
-    $ apt install prometheus-nginxlog-exporter_1.6.0_linux_amd64.deb
+    $ wget https://github.com/martin-helmich/prometheus-nginxlog-exporter/releases/download/v1.8.0/prometheus-nginxlog-exporter_1.8.0_linux_amd64.deb
+    $ apt install ./prometheus-nginxlog-exporter_1.8.0_linux_amd64.deb
 
 The package come with a dependency on systemd and configure the exporter to be
 running automatically:
