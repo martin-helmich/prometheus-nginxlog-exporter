@@ -38,3 +38,17 @@ func UniqueRelabelings(relabelings []*Relabeling) []*Relabeling {
 	}
 	return result
 }
+
+// StripOnlyCounterValues strips all values that are associated to relabelings only intended for the request counter
+func StripOnlyCounterValues(values []string, relabelings []*Relabeling) []string {
+	result := make([]string, 0, len(values))
+	offset := len(values) - len(relabelings)
+	for i := range values {
+		if i >= offset && relabelings[i-offset].OnlyCounter {
+			// skip if relabeling and only enabled for counter
+			continue
+		}
+		result = append(result, values[i])
+	}
+	return result
+}
