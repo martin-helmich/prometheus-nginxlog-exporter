@@ -334,20 +334,21 @@ func processNamespace(nsCfg config.NamespaceConfig, metrics *Metrics) {
 	}
 
 	// determine once if there are any relabeling configurations for only the response counter
+	hasCounterOnlyLabels := false
 	for _, r := range nsCfg.RelabelConfigs {
 		if r.OnlyCounter {
-			nsCfg.HasCounterOnlyLabels = true
+			hasCounterOnlyLabels = true
 			break
 		}
 	}
 
 	for _, f := range followers {
-		go processSource(nsCfg, f, parser, metrics)
+		go processSource(nsCfg, f, parser, metrics, hasCounterOnlyLabels)
 	}
 
 }
 
-func processSource(nsCfg config.NamespaceConfig, t tail.Follower, parser *gonx.Parser, metrics *Metrics) {
+func processSource(nsCfg config.NamespaceConfig, t tail.Follower, parser *gonx.Parser, metrics *Metrics, hasCounterOnlyLabels bool) {
 	relabelings := relabeling.NewRelabelings(nsCfg.RelabelConfigs)
 	relabelings = append(relabelings, relabeling.DefaultRelabelings...)
 	relabelings = relabeling.UniqueRelabelings(relabelings)
@@ -386,7 +387,7 @@ func processSource(nsCfg config.NamespaceConfig, t tail.Follower, parser *gonx.P
 		}
 
 		var notCounterValues []string
-		if nsCfg.HasCounterOnlyLabels {
+		if hasCounterOnlyLabels {
 			notCounterValues = relabeling.StripOnlyCounterValues(labelValues, relabelings)
 		} else {
 			notCounterValues = labelValues

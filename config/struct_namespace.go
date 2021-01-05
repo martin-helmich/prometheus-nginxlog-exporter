@@ -28,8 +28,6 @@ type NamespaceConfig struct {
 
 	OrderedLabelNames  []string
 	OrderedLabelValues []string
-
-	HasCounterOnlyLabels bool
 }
 
 type SourceData struct {
