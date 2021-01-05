@@ -52,7 +52,8 @@ func NewNSMetrics(cfg *config.NamespaceConfig) *NSMetrics {
 	m.Init(cfg)
 
 	m.registry.MustRegister(m.countTotal)
-	m.registry.MustRegister(m.bytesTotal)
+	m.registry.MustRegister(m.requestBytesTotal)
+	m.registry.MustRegister(m.responseBytesTotal)
 	m.registry.MustRegister(m.upstreamSeconds)
 	m.registry.MustRegister(m.upstreamSecondsHist)
 	m.registry.MustRegister(m.responseSeconds)
@@ -65,7 +66,8 @@ func NewNSMetrics(cfg *config.NamespaceConfig) *NSMetrics {
 // exposed to Prometheus
 type Metrics struct {
 	countTotal          *prometheus.CounterVec
-	bytesTotal          *prometheus.CounterVec
+	responseBytesTotal  *prometheus.CounterVec
+	requestBytesTotal   *prometheus.CounterVec
 	upstreamSeconds     *prometheus.SummaryVec
 	upstreamSecondsHist *prometheus.HistogramVec
 	responseSeconds     *prometheus.SummaryVec
@@ -105,11 +107,18 @@ func (m *Metrics) Init(cfg *config.NamespaceConfig) {
 		Help:        "Amount of processed HTTP requests",
 	}, labels)
 
-	m.bytesTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+	m.responseBytesTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace:   cfg.NamespacePrefix,
 		ConstLabels: cfg.NamespaceLabels,
 		Name:        "http_response_size_bytes",
 		Help:        "Total amount of transferred bytes",
+	}, labels)
+
+	m.requestBytesTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace:   cfg.NamespacePrefix,
+		ConstLabels: cfg.NamespaceLabels,
+		Name:        "http_request_size_bytes",
+		Help:        "Total amount of received bytes",
 	}, labels)
 
 	m.upstreamSeconds = prometheus.NewSummaryVec(prometheus.SummaryOpts{
@@ -364,7 +373,11 @@ func processSource(nsCfg config.NamespaceConfig, t tail.Follower, parser *gonx.P
 		metrics.countTotal.WithLabelValues(labelValues...).Inc()
 
 		if bytes, ok := floatFromFields(fields, "body_bytes_sent"); ok {
-			metrics.bytesTotal.WithLabelValues(labelValues...).Add(bytes)
+			metrics.responseBytesTotal.WithLabelValues(labelValues...).Add(bytes)
+		}
+
+		if bytes, ok := floatFromFields(fields, "request_length"); ok {
+			metrics.requestBytesTotal.WithLabelValues(labelValues...).Add(bytes)
 		}
 
 		if upstreamTime, ok := floatFromFields(fields, "upstream_response_time"); ok {
