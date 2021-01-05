@@ -89,14 +89,21 @@ func (m *Metrics) Init(cfg *config.NamespaceConfig) {
 	cfg.MustCompile()
 
 	labels := cfg.OrderedLabelNames
+	counterLabels := labels
 
 	for i := range cfg.RelabelConfigs {
-		labels = append(labels, cfg.RelabelConfigs[i].TargetLabel)
+		if !cfg.RelabelConfigs[i].OnlyCounter {
+			labels = append(labels, cfg.RelabelConfigs[i].TargetLabel)
+		}
+		counterLabels = append(counterLabels, cfg.RelabelConfigs[i].TargetLabel)
 	}
 
 	for _, r := range relabeling.DefaultRelabelings {
 		if !inLabels(r.TargetLabel, labels) {
 			labels = append(labels, r.TargetLabel)
+		}
+		if !inLabels(r.TargetLabel, counterLabels) {
+			counterLabels = append(counterLabels, r.TargetLabel)
 		}
 	}
 
@@ -105,7 +112,7 @@ func (m *Metrics) Init(cfg *config.NamespaceConfig) {
 		ConstLabels: cfg.NamespaceLabels,
 		Name:        "http_response_count_total",
 		Help:        "Amount of processed HTTP requests",
-	}, labels)
+	}, counterLabels)
 
 	m.responseBytesTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace:   cfg.NamespacePrefix,
@@ -326,6 +333,14 @@ func processNamespace(nsCfg config.NamespaceConfig, metrics *Metrics) {
 		}
 	}
 
+	// determine once if there are any relabeling configurations for only the response counter
+	for _, r := range nsCfg.RelabelConfigs {
+		if r.OnlyCounter {
+			nsCfg.HasCounterOnlyLabels = true
+			break
+		}
+	}
+
 	for _, f := range followers {
 		go processSource(nsCfg, f, parser, metrics)
 	}
@@ -370,24 +385,31 @@ func processSource(nsCfg config.NamespaceConfig, t tail.Follower, parser *gonx.P
 			}
 		}
 
+		var notCounterValues []string
+		if nsCfg.HasCounterOnlyLabels {
+			notCounterValues = relabeling.StripOnlyCounterValues(labelValues, relabelings)
+		} else {
+			notCounterValues = labelValues
+		}
+
 		metrics.countTotal.WithLabelValues(labelValues...).Inc()
 
 		if bytes, ok := floatFromFields(fields, "body_bytes_sent"); ok {
-			metrics.responseBytesTotal.WithLabelValues(labelValues...).Add(bytes)
+			metrics.responseBytesTotal.WithLabelValues(notCounterValues...).Add(bytes)
 		}
 
 		if bytes, ok := floatFromFields(fields, "request_length"); ok {
-			metrics.requestBytesTotal.WithLabelValues(labelValues...).Add(bytes)
+			metrics.requestBytesTotal.WithLabelValues(notCounterValues...).Add(bytes)
 		}
 
 		if upstreamTime, ok := floatFromFields(fields, "upstream_response_time"); ok {
-			metrics.upstreamSeconds.WithLabelValues(labelValues...).Observe(upstreamTime)
-			metrics.upstreamSecondsHist.WithLabelValues(labelValues...).Observe(upstreamTime)
+			metrics.upstreamSeconds.WithLabelValues(notCounterValues...).Observe(upstreamTime)
+			metrics.upstreamSecondsHist.WithLabelValues(notCounterValues...).Observe(upstreamTime)
 		}
 
 		if responseTime, ok := floatFromFields(fields, "request_time"); ok {
-			metrics.responseSeconds.WithLabelValues(labelValues...).Observe(responseTime)
-			metrics.responseSecondsHist.WithLabelValues(labelValues...).Observe(responseTime)
+			metrics.responseSeconds.WithLabelValues(notCounterValues...).Observe(responseTime)
+			metrics.responseSecondsHist.WithLabelValues(notCounterValues...).Observe(responseTime)
 		}
 	}
 }

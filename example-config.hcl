@@ -49,6 +49,8 @@ namespace "nginx" {
   relabel "user" {
     from = "remote_user"
     // whitelist = ["-", "user1", "user2"]
+
+    only_counter = true
   }
 
   relabel "request_uri" {
