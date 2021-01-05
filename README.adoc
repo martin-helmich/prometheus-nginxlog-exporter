@@ -228,6 +228,7 @@ These metrics are exported:
 |===
 | `<namespace>_http_response_count_total` | The total amount of processed HTTP requests/responses.
 | `<namespace>_http_response_size_bytes` | The total amount of transferred content in bytes.
+| `<namespace>_http_request_size_bytes` | The total amount of received traffic in bytes. This metrics requires the `$request_length` variable in the log format.
 | `<namespace>_http_upstream_time_seconds` | A summary vector of the upstream response times in seconds. Logging these needs to be specifically enabled in NGINX using the `$upstream_response_time` variable in the log format.
 | `<namespace>_http_upstream_time_seconds_hist` | Same as `<namespace>_http_upstream_time_seconds`, but as a histogram vector. Also requires the `$upstream_response_time` variable in the log format.
 | `<namespace>_http_response_time_seconds` | A summary vector of the total response times in seconds. Logging these needs to be specifically enabled in NGINX using the `$request_time` variable in the log format.
