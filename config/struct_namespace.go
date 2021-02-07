@@ -19,8 +19,9 @@ type NamespaceConfig struct {
 
 	SourceFiles      []string          `hcl:"source_files" yaml:"source_files"`
 	SourceData       SourceData        `hcl:"source" yaml:"source"`
-	Format           string            `hcl:"format"`
-	Labels           map[string]string `hcl:"labels"`
+	Parser           string            `hcl:"parser" yaml:"parser"`
+	Format           string            `hcl:"format" yaml:"format"`
+	Labels           map[string]string `hcl:"labels" yaml:"labels"`
 	RelabelConfigs   []RelabelConfig   `hcl:"relabel" yaml:"relabel_configs"`
 	HistogramBuckets []float64         `hcl:"histogram_buckets" yaml:"histogram_buckets"`
 

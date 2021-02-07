@@ -30,12 +30,12 @@ import (
 
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/config"
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/discovery"
+	"github.com/martin-helmich/prometheus-nginxlog-exporter/parser"
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/prof"
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/relabeling"
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/tail"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/satyrius/gonx"
 )
 
 type NSMetrics struct {
@@ -180,6 +180,7 @@ func main() {
 	nsGatherers := make(prometheus.Gatherers, 0)
 
 	flag.IntVar(&opts.ListenPort, "listen-port", 4040, "HTTP port to listen on")
+	flag.StringVar(&opts.Parser, "parser", "text", "NGINX access log format parser, supported parser: text, json")
 	flag.StringVar(&opts.Format, "format", `$remote_addr - $remote_user [$time_local] "$request" $status $body_bytes_sent "$http_referer" "$http_user_agent" "$http_x_forwarded_for"`, "NGINX access log format")
 	flag.StringVar(&opts.Namespace, "namespace", "nginx", "namespace to use for metric names")
 	flag.StringVar(&opts.ConfigFile, "config-file", "", "Configuration file to read from")
@@ -295,7 +296,7 @@ func setupConsul(cfg *config.Config, stopChan <-chan bool, stopHandlers *sync.Wa
 func processNamespace(nsCfg config.NamespaceConfig, metrics *Metrics) {
 	var followers []tail.Follower
 
-	parser := gonx.NewParser(nsCfg.Format)
+	parser := parser.NewParser(nsCfg)
 
 	for _, f := range nsCfg.SourceData.Files {
 		t, err := tail.NewFileFollower(f)
@@ -348,7 +349,7 @@ func processNamespace(nsCfg config.NamespaceConfig, metrics *Metrics) {
 
 }
 
-func processSource(nsCfg config.NamespaceConfig, t tail.Follower, parser *gonx.Parser, metrics *Metrics, hasCounterOnlyLabels bool) {
+func processSource(nsCfg config.NamespaceConfig, t tail.Follower, parser parser.Parser, metrics *Metrics, hasCounterOnlyLabels bool) {
 	relabelings := relabeling.NewRelabelings(nsCfg.RelabelConfigs)
 	relabelings = append(relabelings, relabeling.DefaultRelabelings...)
 	relabelings = relabeling.UniqueRelabelings(relabelings)
@@ -368,14 +369,12 @@ func processSource(nsCfg config.NamespaceConfig, t tail.Follower, parser *gonx.P
 			fmt.Println(line)
 		}
 
-		entry, err := parser.ParseString(line)
+		fields, err := parser.ParseString(line)
 		if err != nil {
 			fmt.Printf("error while parsing line '%s': %s\n", line, err)
 			metrics.parseErrorsTotal.Inc()
 			continue
 		}
-
-		fields := entry.Fields()
 
 		for i := range relabelings {
 			if str, ok := fields[relabelings[i].SourceValue]; ok {
@@ -415,7 +414,7 @@ func processSource(nsCfg config.NamespaceConfig, t tail.Follower, parser *gonx.P
 	}
 }
 
-func floatFromFields(fields gonx.Fields, name string) (float64, bool) {
+func floatFromFields(fields map[string]string, name string) (float64, bool) {
 	val, ok := fields[name]
 	if !ok {
 		return 0, false

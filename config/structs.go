@@ -5,6 +5,7 @@ package config
 type StartupFlags struct {
 	ConfigFile                 string
 	Filenames                  []string
+	Parser                     string
 	Format                     string
 	Namespace                  string
 	ListenPort                 int
