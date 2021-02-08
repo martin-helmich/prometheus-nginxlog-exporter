@@ -526,12 +526,41 @@ If your regular expression contains groups, you can also use the matched values 
 relabel "request_uri" {
   from = "request"
   split = 2
-  
+
   match "^/(users|profiles)/[0-9]+" {
     replacement = "/$1/:id"
   }
 }
 ----
+
+### File Globs
+
+You can specify one or more wildcards in the source file names, in which case the wildcards will be resolved to the corresponding list of files.
+
+Given a config like this:
+
+[source,hcl]
+---
+namespace "test" {
+  source {
+    files = ["/var/log/nginx/*_access.log"]
+    // ...
+  }
+}
+---
+
+And a folder containing these files:
+
+```bash
+# /var/log/nginx
+main_access.log
+main_error.log
+virtualhost1_access.log
+virtualhost1_error.log
+````
+
+The list of files monitored by this namespace will be `/var/log/nginx/main_access.log,/var/log/nginx/virtualhost1_access.log`.
+
 
 == Frequently Asked Questions
 

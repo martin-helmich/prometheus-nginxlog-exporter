@@ -59,6 +59,7 @@ func LoadConfigFromStream(config *Config, stream io.Reader, typ FileFormat) erro
 
 	for i := range config.Namespaces {
 		config.Namespaces[i].ResolveDeprecations()
+		config.Namespaces[i].ResolveGlobs()
 	}
 
 	return nil

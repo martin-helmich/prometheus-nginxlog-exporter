@@ -31,7 +31,9 @@ consul {
 namespace "nginx" {
   source_files = [
     "test.log",
-    "foo.log"
+    "foo.log",
+    "test/file_pattern*.txt",
+    "test/file_3.txt"
   ]
   format = "$remote_addr - $remote_user [$time_local] \"$request\" $status $body_bytes_sent \"$http_referer\" \"$http_user_agent\" \"$http_x_forwarded_for\""
 
@@ -83,6 +85,8 @@ namespaces:
     source_files:
       - test.log
       - foo.log
+      - test/file_pattern*.txt
+      - test/file_3.txt
     format: "$remote_addr - $remote_user [$time_local] \"$request\" $status $body_bytes_sent \"$http_referer\" \"$http_user_agent\" \"$http_x_forwarded_for\""
     labels:
       app: "magicapp"
@@ -117,10 +121,13 @@ func assertConfigContents(t *testing.T, cfg Config) {
 	require.Len(t, cfg.Namespaces, 1)
 
 	n := cfg.Namespaces[0]
+	expectedFileSource := FileSource{"test.log", "foo.log", "test/file_pattern_1.txt", "test/file_pattern_2.txt", "test/file_3.txt"}
+	expectedSourceFiles := []string{"test.log", "foo.log", "test/file_pattern_1.txt", "test/file_pattern_2.txt", "test/file_3.txt"}
+
 	assert.Equal(t, "nginx", n.Name)
 	assert.Equal(t, "$remote_addr - $remote_user [$time_local] \"$request\" $status $body_bytes_sent \"$http_referer\" \"$http_user_agent\" \"$http_x_forwarded_for\"", n.Format)
-	assert.Equal(t, []string{"test.log", "foo.log"}, n.SourceFiles)
-	assert.Equal(t, FileSource{"test.log", "foo.log"}, n.SourceData.Files)
+	assert.Equal(t, expectedSourceFiles, n.SourceFiles)
+	assert.Equal(t, expectedFileSource, n.SourceData.Files)
 	assert.Equal(t, "magicapp", n.Labels["app"])
 	assert.Nil(t, n.NamespaceLabels)
 	assert.Nil(t, n.MetricsOverride)
