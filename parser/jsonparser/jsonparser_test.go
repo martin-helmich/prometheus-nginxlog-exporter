@@ -11,9 +11,7 @@ func TestJsonParse(t *testing.T) {
 	line := `{"time_local":"2021-02-03T11:22:33+08:00","request_length":123,"request_method":"GET","request":"GET /order/2145 HTTP/1.1","body_bytes_sent":518,"status": 200,"request_time":0.544,"upstream_response_time":"0.543"}`
 
 	got, err := parser.ParseString(line)
-	if err != nil {
-		t.Error(err)
-	}
+	require.NoError(t, err)
 	want := map[string]string{
 		"time_local":             "2021-02-03T11:22:33+08:00",
 		"request_time":           "0.544",
