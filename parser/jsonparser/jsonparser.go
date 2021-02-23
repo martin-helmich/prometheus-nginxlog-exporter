@@ -24,7 +24,11 @@ func (j *JsonParser) ParseString(line string) (map[string]string, error) {
 
 	fields := make(map[string]string, len(parsed))
 	for k, v := range parsed {
-		fields[k] = fmt.Sprintf("%v", v)
+		if s, ok := v.(string); ok {
+			fields[k] = s
+		} else {
+			fields[k] = fmt.Sprintf("%v", v)
+		}
 	}
 	return fields, nil
 }
