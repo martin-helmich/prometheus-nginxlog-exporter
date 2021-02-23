@@ -535,7 +535,7 @@ relabel "request_uri" {
 
 ### JSON log_format
 
-You can use JsonParser by setting the parser argument of the command line or config-file to json.
+You can use the JSON parser by setting the `--parser` command line flag or `parser` config file property to `json`.
 
 == Frequently Asked Questions
 
