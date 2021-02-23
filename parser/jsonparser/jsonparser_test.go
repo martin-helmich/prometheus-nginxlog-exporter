@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"reflect"
 	"testing"
+	
+	"github.com/stretchr/testify/require"
 )
 
 func TestJsonParse(t *testing.T) {
@@ -22,7 +24,6 @@ func TestJsonParse(t *testing.T) {
 		"request":                "GET /order/2145 HTTP/1.1",
 		"request_method":         "GET",
 	}
-
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("JsonParser.Parse() = %v, want %v", got, want)
 	}
