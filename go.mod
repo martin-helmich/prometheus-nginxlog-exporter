@@ -14,7 +14,7 @@ require (
 	github.com/mitchellh/mapstructure v1.3.3 // indirect
 	github.com/prometheus/client_golang v1.9.0
 	github.com/satyrius/gonx v1.3.1-0.20180709120835-47c52b995fe5
-	github.com/stretchr/testify v1.6.1
+	github.com/stretchr/testify v1.7.0
 	gopkg.in/mcuadros/go-syslog.v2 v2.3.0
 	gopkg.in/yaml.v2 v2.4.0
 )

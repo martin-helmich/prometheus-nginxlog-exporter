@@ -561,6 +561,9 @@ virtualhost1_error.log
 
 The list of files monitored by this namespace will be `/var/log/nginx/main_access.log,/var/log/nginx/virtualhost1_access.log`.
 
+### JSON log_format
+
+You can use the JSON parser by setting the `--parser` command line flag or `parser` config file property to `json`.
 
 == Frequently Asked Questions
 

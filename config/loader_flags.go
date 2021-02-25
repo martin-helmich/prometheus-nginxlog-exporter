@@ -11,6 +11,7 @@ func LoadConfigFromFlags(config *Config, flags *StartupFlags) error {
 	config.Namespaces = []NamespaceConfig{
 		{
 			Format: flags.Format,
+			Parser: flags.Parser,
 			Name:   flags.Namespace,
 			SourceData: SourceData{
 				Files: flags.Filenames,
