@@ -533,6 +533,10 @@ relabel "request_uri" {
 }
 ----
 
+### JSON log_format
+
+You can use the JSON parser by setting the `--parser` command line flag or `parser` config file property to `json`.
+
 == Frequently Asked Questions
 
 > I have started the exporter, but it is not exporting any application-specific metrics!
