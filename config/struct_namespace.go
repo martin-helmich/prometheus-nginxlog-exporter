@@ -82,16 +82,16 @@ func (c *NamespaceConfig) ResolveDeprecations() {
 
 // ResolveGlobs finds globs in file sources and expand them to the actual
 // list of files
-func (c *NamespaceConfig) ResolveGlobs() {
+func (c *NamespaceConfig) ResolveGlobs() error {
 	if len(c.SourceData.Files) > 0 {
 		resolvedFiles := make([]string, 0)
 		for _, sf := range c.SourceData.Files {
 			if strings.Contains(sf, "*") {
 				matches, err := filepath.Glob(sf)
-				fmt.Printf("Resolved globs %v to %v\n", sf, matches)
 				if err != nil {
-					panic(err)
+					return err
 				}
+				fmt.Printf("Resolved globs %v to %v\n", sf, matches)
 				resolvedFiles = append(resolvedFiles, matches...)
 			} else {
 				fmt.Printf("No globs for %v\n", sf)
@@ -103,6 +103,7 @@ func (c *NamespaceConfig) ResolveGlobs() {
 		c.SourceData.Files = resolvedFiles
 		c.SourceFiles = resolvedFiles
 	}
+	return nil
 }
 
 // Compile compiles the configuration (mostly regular expressions that are used
