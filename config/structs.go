@@ -8,6 +8,7 @@ type StartupFlags struct {
 	Parser                     string
 	Format                     string
 	Namespace                  string
+	ListenAddress              string
 	ListenPort                 int
 	EnableExperimentalFeatures bool
 	MetricsEndpoint            string

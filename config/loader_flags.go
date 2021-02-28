@@ -5,7 +5,7 @@ package config
 func LoadConfigFromFlags(config *Config, flags *StartupFlags) error {
 	config.Listen = ListenConfig{
 		Port:            flags.ListenPort,
-		Address:         "0.0.0.0",
+		Address:         flags.ListenAddress,
 		MetricsEndpoint: flags.MetricsEndpoint,
 	}
 	config.Namespaces = []NamespaceConfig{
