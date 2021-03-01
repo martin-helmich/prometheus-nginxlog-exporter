@@ -189,6 +189,7 @@ func main() {
 	flag.StringVar(&opts.CPUProfile, "cpuprofile", "", "write cpu profile to `file`")
 	flag.StringVar(&opts.MemProfile, "memprofile", "", "write memory profile to `file`")
 	flag.StringVar(&opts.MetricsEndpoint, "metrics-endpoint", cfg.Listen.MetricsEndpoint, "URL path at which to serve metrics")
+	flag.BoolVar(&opts.VerifyConfig, "verify-config", false, "Enable this flag to check config file loads, then exit")
 	flag.Parse()
 
 	opts.Filenames = flag.Args()
@@ -266,6 +267,10 @@ func loadConfig(opts *config.StartupFlags, cfg *config.Config) {
 		}
 	} else if err := config.LoadConfigFromFlags(cfg, opts); err != nil {
 		panic(err)
+	}
+	if opts.VerifyConfig {
+		fmt.Printf("Configuration is valid")
+		os.Exit(0)
 	}
 }
 

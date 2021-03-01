@@ -12,6 +12,7 @@ type StartupFlags struct {
 	ListenPort                 int
 	EnableExperimentalFeatures bool
 	MetricsEndpoint            string
+	VerifyConfig               bool
 
 	CPUProfile string
 	MemProfile string
