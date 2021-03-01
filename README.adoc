@@ -44,6 +44,13 @@ Use the configuration file:
 $ ./prometheus-nginxlog-exporter -config-file /path/to/config.hcl
 ----
 
+You can verify your config file before deployment, which will exit with shell status indicating success:
+
+[source]
+----
+$ ./prometheus-nginxlog-exporter -config-file /path/to/config.hcl -verify-config
+----
+
 Installation
 ------------
 
@@ -526,7 +533,7 @@ If your regular expression contains groups, you can also use the matched values 
 relabel "request_uri" {
   from = "request"
   split = 2
-  
+
   match "^/(users|profiles)/[0-9]+" {
     replacement = "/$1/:id"
   }
