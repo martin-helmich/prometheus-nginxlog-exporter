@@ -36,6 +36,13 @@ type ListenConfig struct {
 	Port            int
 	Address         string
 	MetricsEndpoint string `hcl:"metrics_endpoint" yaml:"metrics_endpoint"`
+	TLS				TLSConfig
+}
+//TLSConfig is a struct for certificate files
+type TLSConfig struct {
+	Enable      bool
+	CertFile 	string
+	KeyFile	    string
 }
 
 // ConsulConfig describes the connection to a Consul server that the exporter should

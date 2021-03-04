@@ -246,7 +246,6 @@ func main() {
 	listenAddr := fmt.Sprintf("%s:%d", cfg.Listen.Address, cfg.Listen.Port)
 	endpoint := cfg.Listen.MetricsEndpointOrDefault()
 
-	fmt.Printf("running HTTP server on address %s, serving metrics at %s\n", listenAddr, endpoint)
 
 	nsHandler := promhttp.InstrumentMetricHandler(
 		prometheus.DefaultRegisterer, promhttp.HandlerFor(nsGatherers, promhttp.HandlerOpts{}),
@@ -254,8 +253,22 @@ func main() {
 
 	http.Handle(endpoint, nsHandler)
 
-	if err := http.ListenAndServe(listenAddr, nil); err != nil {
-		fmt.Printf("error while starting HTTP server: %s", err.Error())
+	if cfg.Listen.TLS.Enable {
+		if _, err := os.Stat(cfg.Listen.TLS.CertFile); err != nil {
+			fmt.Printf("Error loading certificate: %s", err.Error())
+		}
+		if _, err := os.Stat(cfg.Listen.TLS.KeyFile); err != nil {
+			fmt.Printf("Error loading key: %s", err.Error())
+		}
+		fmt.Printf("running HTTPS server on address %s, serving metrics at %s\n", listenAddr, endpoint)
+		if err := http.ListenAndServeTLS(listenAddr, cfg.Listen.TLS.CertFile, cfg.Listen.TLS.KeyFile, nil); err != nil {
+			fmt.Printf("Failed to start the HTTPS server: %s", err.Error())
+		}
+	} else {
+		fmt.Printf("running HTTP server on address %s, serving metrics at %s\n", listenAddr, endpoint)
+		if err := http.ListenAndServe(listenAddr, nil); err != nil {
+			fmt.Printf("error while starting HTTP server: %s", err.Error())
+		}
 	}
 }
 
