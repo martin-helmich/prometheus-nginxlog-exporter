@@ -540,6 +540,36 @@ relabel "request_uri" {
 }
 ----
 
+### File Globs
+
+You can specify one or more wildcards in the source file names, in which case the wildcards will be resolved to the corresponding list of files at startup of the exporter.
+
+Be aware that the list of matches is only evaluated at the start of the program. If a new file is added with a match of one glob filter, you'll have to restart the program for it to be monitored.
+
+Given a config like this:
+
+[source,hcl]
+---
+namespace "test" {
+  source {
+    files = ["/var/log/nginx/*_access.log"]
+    // ...
+  }
+}
+---
+
+And a folder containing these files:
+
+```bash
+# /var/log/nginx
+main_access.log
+main_error.log
+virtualhost1_access.log
+virtualhost1_error.log
+````
+
+The list of files monitored by this namespace will be `/var/log/nginx/main_access.log,/var/log/nginx/virtualhost1_access.log`.
+
 ### JSON log_format
 
 You can use the JSON parser by setting the `--parser` command line flag or `parser` config file property to `json`.

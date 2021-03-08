@@ -2,7 +2,10 @@ package config
 
 import (
 	"errors"
+	"fmt"
+	"path/filepath"
 	"sort"
+	"strings"
 )
 
 // NamespaceConfig is a struct describing single metric namespaces
@@ -75,6 +78,32 @@ func (c *NamespaceConfig) ResolveDeprecations() {
 	if len(c.SourceFiles) > 0 {
 		c.SourceData.Files = FileSource(c.SourceFiles)
 	}
+}
+
+// ResolveGlobs finds globs in file sources and expand them to the actual
+// list of files
+func (c *NamespaceConfig) ResolveGlobs() error {
+	if len(c.SourceData.Files) > 0 {
+		resolvedFiles := make([]string, 0)
+		for _, sf := range c.SourceData.Files {
+			if strings.Contains(sf, "*") {
+				matches, err := filepath.Glob(sf)
+				if err != nil {
+					return err
+				}
+				fmt.Printf("Resolved globs %v to %v\n", sf, matches)
+				resolvedFiles = append(resolvedFiles, matches...)
+			} else {
+				fmt.Printf("No globs for %v\n", sf)
+				resolvedFiles = append(resolvedFiles, sf)
+			}
+		}
+
+		// update fields with new list of files
+		c.SourceData.Files = resolvedFiles
+		c.SourceFiles = resolvedFiles
+	}
+	return nil
 }
 
 // Compile compiles the configuration (mostly regular expressions that are used
