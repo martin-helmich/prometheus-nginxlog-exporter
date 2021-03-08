@@ -535,7 +535,9 @@ relabel "request_uri" {
 
 ### File Globs
 
-You can specify one or more wildcards in the source file names, in which case the wildcards will be resolved to the corresponding list of files.
+You can specify one or more wildcards in the source file names, in which case the wildcards will be resolved to the corresponding list of files at startup of the exporter.
+
+Be aware that the list of matches is only evaluated at the start of the program. If a new file is added with a match of one glob filter, you'll have to restart the program for it to be monitored.
 
 Given a config like this:
 
