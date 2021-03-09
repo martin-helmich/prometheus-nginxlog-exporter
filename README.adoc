@@ -566,7 +566,7 @@ main_access.log
 main_error.log
 virtualhost1_access.log
 virtualhost1_error.log
-````
+```
 
 The list of files monitored by this namespace will be `/var/log/nginx/main_access.log,/var/log/nginx/virtualhost1_access.log`.
 
