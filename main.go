@@ -23,6 +23,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 
@@ -400,36 +401,74 @@ func processSource(nsCfg config.NamespaceConfig, t tail.Follower, parser parser.
 
 		metrics.countTotal.WithLabelValues(labelValues...).Inc()
 
-		if bytes, ok := floatFromFields(fields, "body_bytes_sent"); ok {
-			metrics.responseBytesTotal.WithLabelValues(notCounterValues...).Add(bytes)
+		if v, ok := observeMetrics(fields, "body_bytes_sent", floatFromFields, metrics.parseErrorsTotal); ok {
+			metrics.responseBytesTotal.WithLabelValues(notCounterValues...).Add(v)
 		}
 
-		if bytes, ok := floatFromFields(fields, "request_length"); ok {
-			metrics.requestBytesTotal.WithLabelValues(notCounterValues...).Add(bytes)
+		if v, ok := observeMetrics(fields, "request_length", floatFromFields, metrics.parseErrorsTotal); ok {
+			metrics.requestBytesTotal.WithLabelValues(notCounterValues...).Add(v)
 		}
 
-		if upstreamTime, ok := floatFromFields(fields, "upstream_response_time"); ok {
-			metrics.upstreamSeconds.WithLabelValues(notCounterValues...).Observe(upstreamTime)
-			metrics.upstreamSecondsHist.WithLabelValues(notCounterValues...).Observe(upstreamTime)
+		if v, ok := observeMetrics(fields, "upstream_response_time", floatFromFieldsMulti, metrics.parseErrorsTotal); ok {
+			metrics.upstreamSeconds.WithLabelValues(notCounterValues...).Observe(v)
+			metrics.upstreamSecondsHist.WithLabelValues(notCounterValues...).Observe(v)
 		}
 
-		if responseTime, ok := floatFromFields(fields, "request_time"); ok {
-			metrics.responseSeconds.WithLabelValues(notCounterValues...).Observe(responseTime)
-			metrics.responseSecondsHist.WithLabelValues(notCounterValues...).Observe(responseTime)
+		if v, ok := observeMetrics(fields, "request_time", floatFromFields, metrics.parseErrorsTotal); ok {
+			metrics.responseSeconds.WithLabelValues(notCounterValues...).Observe(v)
+			metrics.responseSecondsHist.WithLabelValues(notCounterValues...).Observe(v)
 		}
 	}
 }
 
-func floatFromFields(fields map[string]string, name string) (float64, bool) {
+func observeMetrics(fields map[string]string, name string, extractor func(map[string]string, string) (float64, bool, error), parseErrors prometheus.Counter) (float64, bool) {
+	if observation, ok, err := extractor(fields, name); ok {
+		return observation, true
+	} else if err != nil {
+		fmt.Printf("error while parsing $%s: %v\n", name, err)
+		parseErrors.Inc()
+	}
+
+	return 0, false
+}
+
+func floatFromFieldsMulti(fields map[string]string, name string) (float64, bool, error) {
+	f, ok, err := floatFromFields(fields, name)
+	if err == nil {
+		return f, ok, nil
+	}
+
 	val, ok := fields[name]
 	if !ok {
-		return 0, false
+		return 0, false, nil
+	}
+
+	sum := float64(0)
+
+	for _, v := range strings.Split(val, ",") {
+		v = strings.TrimSpace(v)
+
+		f, err := strconv.ParseFloat(v, 64)
+		if err != nil {
+			return 0, false, fmt.Errorf("value '%s' could not be parsed into float", val)
+		}
+
+		sum += f
+	}
+
+	return sum, true, nil
+}
+
+func floatFromFields(fields map[string]string, name string) (float64, bool, error) {
+	val, ok := fields[name]
+	if !ok {
+		return 0, false, nil
 	}
 
 	f, err := strconv.ParseFloat(val, 64)
 	if err != nil {
-		return 0, false
+		return 0, false, fmt.Errorf("value '%s' could not be parsed into float", val)
 	}
 
-	return f, true
+	return f, true, nil
 }
