@@ -401,36 +401,35 @@ func processSource(nsCfg config.NamespaceConfig, t tail.Follower, parser parser.
 
 		metrics.countTotal.WithLabelValues(labelValues...).Inc()
 
-		if bytes, ok, err := floatFromFields(fields, "body_bytes_sent"); ok {
-			metrics.responseBytesTotal.WithLabelValues(notCounterValues...).Add(bytes)
-		} else if err != nil {
-			fmt.Printf("error while parsing $body_bytes_sent: %v\n", err)
-			metrics.parseErrorsTotal.Inc()
+		if v, ok := observeMetrics(fields, "body_bytes_sent", floatFromFields, metrics.parseErrorsTotal); ok {
+			metrics.responseBytesTotal.WithLabelValues(notCounterValues...).Add(v)
 		}
 
-		if bytes, ok, err := floatFromFields(fields, "request_length"); ok {
-			metrics.requestBytesTotal.WithLabelValues(notCounterValues...).Add(bytes)
-		} else if err != nil {
-			fmt.Printf("error while parsing $request_length: %v\n", err)
-			metrics.parseErrorsTotal.Inc()
+		if v, ok := observeMetrics(fields, "request_length", floatFromFields, metrics.parseErrorsTotal); ok {
+			metrics.requestBytesTotal.WithLabelValues(notCounterValues...).Add(v)
 		}
 
-		if upstreamTime, ok, err := floatFromFieldsMulti(fields, "upstream_response_time"); ok {
-			metrics.upstreamSeconds.WithLabelValues(notCounterValues...).Observe(upstreamTime)
-			metrics.upstreamSecondsHist.WithLabelValues(notCounterValues...).Observe(upstreamTime)
-		} else if err != nil {
-			fmt.Printf("error while parsing $upstream_response_time: %v\n", err)
-			metrics.parseErrorsTotal.Inc()
+		if v, ok := observeMetrics(fields, "upstream_response_time", floatFromFieldsMulti, metrics.parseErrorsTotal); ok {
+			metrics.upstreamSeconds.WithLabelValues(notCounterValues...).Observe(v)
+			metrics.upstreamSecondsHist.WithLabelValues(notCounterValues...).Observe(v)
 		}
 
-		if responseTime, ok, err := floatFromFields(fields, "request_time"); ok {
-			metrics.responseSeconds.WithLabelValues(notCounterValues...).Observe(responseTime)
-			metrics.responseSecondsHist.WithLabelValues(notCounterValues...).Observe(responseTime)
-		} else if err != nil {
-			fmt.Printf("error while parsing $request_time: %v\n", err)
-			metrics.parseErrorsTotal.Inc()
+		if v, ok := observeMetrics(fields, "request_time", floatFromFields, metrics.parseErrorsTotal); ok {
+			metrics.responseSeconds.WithLabelValues(notCounterValues...).Observe(v)
+			metrics.responseSecondsHist.WithLabelValues(notCounterValues...).Observe(v)
 		}
 	}
+}
+
+func observeMetrics(fields map[string]string, name string, extractor func(map[string]string, string) (float64, bool, error), parseErrors prometheus.Counter) (float64, bool) {
+	if observation, ok, err := extractor(fields, name); ok {
+		return observation, true
+	} else if err != nil {
+		fmt.Printf("error while parsing $%s: %v\n", name, err)
+		parseErrors.Inc()
+	}
+
+	return 0, false
 }
 
 func floatFromFieldsMulti(fields map[string]string, name string) (float64, bool, error) {
