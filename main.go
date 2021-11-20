@@ -367,9 +367,7 @@ func processSource(nsCfg config.NamespaceConfig, t tail.Follower, parser parser.
 	relabelLabelOffset := len(staticLabelValues)
 	labelValues := make([]string, totalLabelCount)
 
-	for i := range staticLabelValues {
-		labelValues[i] = staticLabelValues[i]
-	}
+	copy(labelValues, staticLabelValues)
 
 	for line := range t.Lines() {
 		if nsCfg.PrintLog {
