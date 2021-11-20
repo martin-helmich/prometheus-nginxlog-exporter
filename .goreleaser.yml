@@ -30,7 +30,7 @@ dockers:
     - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:v{{ .Major }}
     - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:v{{ .Major }}.{{ .Minor }}
     - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:{{ .Tag }}
-    binaries:
+    ids:
       - prometheus-nginxlog-exporter
     goos: linux
     goarch: amd64
@@ -46,9 +46,11 @@ nfpms:
     dependencies:
       - systemd
     bindir: /usr/sbin
-    files:
-      res/package/prometheus-nginxlog-exporter.service: /lib/systemd/system/prometheus-nginxlog-exporter.service
-    config_files:
-      res/package/default-config.hcl: /etc/prometheus-nginxlog-exporter.hcl
+    contents:
+      - src: res/package/prometheus-nginxlog-exporter.service
+        dst: /lib/systemd/system/prometheus-nginxlog-exporter.service
+      - src: res/package/default-config.hcl
+        dst: /etc/prometheus-nginxlog-exporter.hcl
+        type: config|noreplace
     scripts:
       postinstall: res/package/scripts/postinstall.sh
