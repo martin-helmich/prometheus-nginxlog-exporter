@@ -1,0 +1,11 @@
+enable_experimental: true
+
+listen:
+  port: 4040
+
+namespaces:
+  - name: test
+    format: "foo"
+    source_files:
+      - .behave-sandbox/access.log
+      - .behave-sandbox/access2.log

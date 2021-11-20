@@ -1,0 +1,20 @@
+enable_experimental: true
+
+listen:
+  port: 4040
+
+namespaces:
+  - name: test
+    namespace_label: vhost
+    metrics_override:
+      prefix: http
+    format: "foo"
+    source_files:
+      - .behave-sandbox/access.log
+  - name: test2
+    namespace_label: vhost
+    metrics_override:
+      prefix: http
+    format: "bar"
+    source_files:
+      - .behave-sandbox/access2.log
