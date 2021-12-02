@@ -37,6 +37,8 @@ import (
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/tail"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/prometheus/common/promlog"
+	"github.com/prometheus/exporter-toolkit/web"
 )
 
 type NSMetrics struct {
@@ -191,6 +193,7 @@ func main() {
 	flag.StringVar(&opts.MemProfile, "memprofile", "", "write memory profile to `file`")
 	flag.StringVar(&opts.MetricsEndpoint, "metrics-endpoint", cfg.Listen.MetricsEndpoint, "URL path at which to serve metrics")
 	flag.BoolVar(&opts.VerifyConfig, "verify-config", false, "Enable this flag to check config file loads, then exit")
+	flag.StringVar(&opts.WebConfigFile, "web-config", "", "Web Configuration file")
 	flag.Parse()
 
 	opts.Filenames = flag.Args()
@@ -243,6 +246,8 @@ func main() {
 		fmt.Printf("starting listener for namespace %s\n", ns.Name)
 		go processNamespace(ns, &(nsMetrics.Metrics))
 	}
+	promlogConfig := &promlog.Config{}
+	logger := promlog.New(promlogConfig)
 
 	listenAddr := fmt.Sprintf("%s:%d", cfg.Listen.Address, cfg.Listen.Port)
 	endpoint := cfg.Listen.MetricsEndpointOrDefault()
@@ -255,9 +260,12 @@ func main() {
 
 	http.Handle(endpoint, nsHandler)
 
-	if err := http.ListenAndServe(listenAddr, nil); err != nil {
+	server := &http.Server{Addr: listenAddr}
+	if err := web.ListenAndServe(server, opts.WebConfigFile, logger); err != nil {
 		fmt.Printf("error while starting HTTP server: %s", err.Error())
+		os.Exit(1)
 	}
+
 }
 
 func loadConfig(opts *config.StartupFlags, cfg *config.Config) {
