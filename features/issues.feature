@@ -36,6 +36,62 @@ Feature: Various issues reported in the bug tracker remain solved
       """
     Then the exporter should report value 12 for metric test_http_upstream_time_seconds_sum{method="GET",status="200"}
 
+  Scenario: Issue 212: Parse errors from multiple namespaces
+    Given a running exporter listening with configuration file "test-config-issue212.yaml"
+    When the following HTTP request is logged to "access.log"
+      """
+      wrong
+      foo
+      wrong
+      wrong
+      foo
+      """
+    And the following HTTP request is logged to "access2.log"
+      """
+      bar
+      wrong
+      bar
+      wrong
+      """
+    Then the exporter should report value 3 for metric test_parse_errors_total
+    And the exporter should report value 2 for metric test2_parse_errors_total
+
+  Scenario: Issue 212: Parse errors from multiple files in same namespace
+    Given a running exporter listening with configuration file "test-config-issue212b.yaml"
+    When the following HTTP request is logged to "access.log"
+      """
+      foo
+      bar
+      bar
+      bar
+      """
+    And the following HTTP request is logged to "access2.log"
+      """
+      bar
+      bar
+      """
+    Then the exporter should report value 5 for metric test_parse_errors_total
+
+  Scenario: Issue 212: Parse errors from multiple namespaces with namespace as label
+    Given a running exporter listening with configuration file "test-config-issue212c.yaml"
+    When the following HTTP request is logged to "access.log"
+      """
+      wrong
+      foo
+      wrong
+      wrong
+      foo
+      """
+    And the following HTTP request is logged to "access2.log"
+      """
+      bar
+      wrong
+      bar
+      wrong
+      """
+    Then the exporter should report value 3 for metric http_parse_errors_total{vhost="test"}
+    And the exporter should report value 2 for metric http_parse_errors_total{vhost="test2"}
+
   Scenario: Issue 224: Missing float values
     Given a running exporter listening with configuration file "test-config-issue217.yaml"
     When the following HTTP request is logged to "access.log"
@@ -45,3 +101,4 @@ Feature: Various issues reported in the bug tracker remain solved
       """
     Then the exporter should report value 0 for metric test_parse_errors_total
     Then the exporter should report value 4 for metric test_http_upstream_time_seconds_sum{method="GET",status="200"}
+
