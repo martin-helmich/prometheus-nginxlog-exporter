@@ -91,3 +91,14 @@ Feature: Various issues reported in the bug tracker remain solved
       """
     Then the exporter should report value 3 for metric http_parse_errors_total{vhost="test"}
     And the exporter should report value 2 for metric http_parse_errors_total{vhost="test2"}
+
+  Scenario: Issue 224: Missing float values
+    Given a running exporter listening with configuration file "test-config-issue217.yaml"
+    When the following HTTP request is logged to "access.log"
+      """
+      www.example.com 10.0.0.1 - - [27/Oct/2021:06:00:14 +0200] "GET /websocket HTTP/1.1" 200 552 "-" "SomeUserAgentString" 0.000 "1.000, -, 2.000" . TLSv1.3/TLS_AES_256_GCM_SHA384 1234567890 www.example.com
+      www.example.com 10.0.0.2 - - [27/Oct/2021:06:00:15 +0200] "GET /websocket HTTP/1.1" 200 552 "-" "AnotherUserAgent" - "1.000" . TLSv1.3/TLS_AES_256_GCM_SHA384 1234567890 www.example.com
+      """
+    Then the exporter should report value 0 for metric test_parse_errors_total
+    Then the exporter should report value 4 for metric test_http_upstream_time_seconds_sum{method="GET",status="200"}
+

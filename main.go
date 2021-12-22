@@ -446,6 +446,10 @@ func floatFromFieldsMulti(fields map[string]string, name string) (float64, bool,
 	for _, v := range strings.Split(val, ",") {
 		v = strings.TrimSpace(v)
 
+		if v == "-" {
+			continue
+		}
+
 		f, err := strconv.ParseFloat(v, 64)
 		if err != nil {
 			return 0, false, fmt.Errorf("value '%s' could not be parsed into float", val)
@@ -460,6 +464,10 @@ func floatFromFieldsMulti(fields map[string]string, name string) (float64, bool,
 func floatFromFields(fields map[string]string, name string) (float64, bool, error) {
 	val, ok := fields[name]
 	if !ok {
+		return 0, false, nil
+	}
+
+	if val == "-" {
 		return 0, false, nil
 	}
 
