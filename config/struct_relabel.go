@@ -22,10 +22,11 @@ type RelabelConfig struct {
 
 // RelabelValueMatch describes a single label match statement
 type RelabelValueMatch struct {
-	RegexpString string `hcl:",key" yaml:"regexp"`
-	Replacement  string `hcl:"replacement"`
-
+	RegexpString   string `hcl:",key" yaml:"regexp"`
+	Replacement    string `hcl:"replacement"`
+	IgnoreString   string `hcl:"ignore" yaml:"ignore"`
 	CompiledRegexp *regexp.Regexp
+	CompiledIgnore *regexp.Regexp
 }
 
 // Compile compiles expressions and lookup tables for efficient later use
@@ -45,6 +46,15 @@ func (c *RelabelConfig) Compile() error {
 			}
 
 			c.Matches[i].CompiledRegexp = r
+		}
+
+		if c.Matches[i].IgnoreString != "" {
+			r, err := regexp.Compile(c.Matches[i].IgnoreString)
+			if err != nil {
+				return fmt.Errorf("could not compile regexp '%s': %s", c.Matches[i].IgnoreString, err.Error())
+			}
+
+			c.Matches[i].CompiledIgnore = r
 		}
 	}
 

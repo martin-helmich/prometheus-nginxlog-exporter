@@ -52,3 +52,24 @@ func TestRequestURIMapping(t *testing.T) {
 	assertMapping(t, r, "GET /users/12345/about HTTP/1.1", "/users/:id/about")
 	assertMapping(t, r, "GET /v1/users/12345 HTTP/1.1", "")
 }
+
+func TestIgnore(t *testing.T) {
+	t.Parallel()
+
+	r, err := buildRelabeling(config.RelabelConfig{
+		Split: 2,
+		Matches: []config.RelabelValueMatch{
+			{
+				RegexpString: ".*",
+				Replacement:  "unknown",
+				IgnoreString: "^/api",
+			},
+		},
+	})
+	if err != nil {
+		t.Error(err)
+	}
+
+	assertMapping(t, r, "GET /index.html HTTP/1.1", "unknown")
+	assertMapping(t, r, "GET /api/v1/index.html HTTP/1.1", "/api/v1/index.html")
+}

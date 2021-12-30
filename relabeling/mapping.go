@@ -34,6 +34,11 @@ func (r *Relabeling) Map(sourceValue string) (string, error) {
 		replacement := ""
 		for i := range r.Matches {
 			if r.Matches[i].CompiledRegexp.MatchString(sourceValue) {
+				if r.Matches[i].CompiledIgnore != nil && r.Matches[i].CompiledIgnore.MatchString(sourceValue) {
+					replacement = sourceValue
+					break
+				}
+
 				replacement = r.Matches[i].CompiledRegexp.ReplaceAllString(sourceValue, r.Matches[i].Replacement)
 				break
 			}

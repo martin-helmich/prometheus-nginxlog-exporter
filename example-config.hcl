@@ -57,8 +57,13 @@ namespace "nginx" {
     from = "request"
     split = 2
 
-    match "^users/[0-9]+" {
+    match "^/users/[0-9]+" {
       replacement = "/users/:id"
+    }
+
+    match ".*" {
+      replacement = "unknown"
+      ignore = "^/api"
     }
   }
 }
