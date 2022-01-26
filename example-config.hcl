@@ -27,14 +27,6 @@ namespace "nginx" {
       "test.log",
       "foo.log",
     ]
-
-    syslog {
-      listen_address = "udp://0.0.0.0:5531"
-      format = "rfc3164"
-      tags = [
-        "sometag"
-      ]
-    }
   }
 
   format = "$remote_addr - $remote_user [$time_local] \"$request\" $status $body_bytes_sent \"$http_referer\" \"$http_user_agent\" \"$http_x_forwarded_for\""

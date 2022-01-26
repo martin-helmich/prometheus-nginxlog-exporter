@@ -137,35 +137,6 @@ If you run a logfile-generating service (be it NGINX, or anything that generates
 similar access log files) in Kubernetes, you can run the exporter as a sidecar
 along your "main" container within the same pod.
 
-The following example shows you how to deploy the exporter as a sidecar,
-accepting logs from the main container via syslog:
-
-[source,yaml]
-----
-apiVersion: v1
-kind: Pod
-metadata:
-  name: nginx-example
-  annotations:
-    prometheus.io/scrape: "true"
-    prometheus.io/port: "4040"
-spec:
-  containers:
-    - name: web
-      image: nginx
-      # ...
-    - name: exporter
-      image: docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:v1
-      args: ["-config-file", "/etc/prometheus-nginxlog-exporter/config.hcl"]
-      volumeMounts:
-      - name: exporter-config
-        mountPath: /etc/prometheus-nginxlog-exporter
-  volumes:
-    - name: exporter-config
-      configMap:
-        name: exporter-config
-----
-
 In this example, the configuration file is passed via the `exporter-config`
 ConfigMap. This might look like follows:
 
@@ -181,14 +152,6 @@ data:
       port = 4040
     }
 
-    namespace "nginx" {
-      source = {
-        syslog {
-          listen_address = "udp://127.0.0.1:5531"
-          format = "rfc3164"
-        }
-      }
-
       format = "$remote_addr - $remote_user [$time_local] \"$request\" $status $body_bytes_sent \"$http_referer\" \"$http_user_agent\" \"$http_x_forwarded_for\""
 
       labels {
@@ -196,11 +159,6 @@ data:
       }
     }
 ----
-
-The config file instructs the exporter to accept log input via syslog. To
-forward logs to the exporter, just instruct your main container to send its
-access logs via syslog to `127.0.0.1:5531` (which works, since the main
-container and the sidecar share their network namespace).
 
 ### Build from source
 
@@ -415,7 +373,7 @@ Exported metrics will have `upstream_addr` and `country` labels.
 Currently, the exporter supports reading log data from
 
 1. files
-2. syslog
+
 
 All log sources can be configured on a per-namespace basis using the `source` property.
 
@@ -431,30 +389,7 @@ namespace "test" {
   }
 }
 ```
-
-#### Reading from syslog
-
-The exporter can also open and listen on a Syslog port and read logs from there. Configuration works as follows:
-
-[source,hcl]
-----
-namespace "test" {
-  source {
-    syslog {
-      listen_address = "udp://127.0.0.1:8514" <1>
-      format = "rfc3164" <2>
-      tags = ["nginx"]
-    }
-
-    // ...
-  }
-}
-----
-<1> The `listen_address` might be either a TCP or UDP address. UNIX sockets are not supported (yet -- pull requests are welcome)
-<2> The `format` may be one of `rfc3164`, `rfc5424`, `rfc6587` or `auto`. If omitted, it will default to `auto`.
-
-Have a look at http://nginx.org/en/docs/syslog.html[the respective section of the NGINX documentation] on how to set up NGINX to log into syslog.
-
+  
 ### Dynamic re-labeling
 
 Re-labeling lets you add arbitrary fields from the parsed log line as labels to your metrics.

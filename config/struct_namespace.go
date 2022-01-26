@@ -36,16 +36,10 @@ type NamespaceConfig struct {
 
 type SourceData struct {
 	Files  FileSource    `hcl:"files" yaml:"files"`
-	Syslog *SyslogSource `hcl:"syslog" yaml:"syslog"`
 }
 
 type FileSource []string
 
-type SyslogSource struct {
-	ListenAddress string   `hcl:"listen_address" yaml:"listen_address"`
-	Format        string   `hcl:"format" yaml:"format"`
-	Tags          []string `hcl:"tags" yaml:"tags"`
-}
 
 // StabilityWarnings tests if the NamespaceConfig uses any configuration settings
 // that are not yet declared "stable"

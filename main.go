@@ -27,8 +27,6 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/martin-helmich/prometheus-nginxlog-exporter/syslog"
-
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/config"
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/discovery"
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/parser"
@@ -316,29 +314,6 @@ func processNamespace(nsCfg config.NamespaceConfig, metrics *Metrics) {
 		})
 
 		followers = append(followers, t)
-	}
-
-	if nsCfg.SourceData.Syslog != nil {
-		slCfg := nsCfg.SourceData.Syslog
-
-		fmt.Printf("running Syslog server on address %s\n", slCfg.ListenAddress)
-		channel, server, err := syslog.Listen(slCfg.ListenAddress, slCfg.Format)
-		if err != nil {
-			panic(err)
-		}
-
-		for _, f := range slCfg.Tags {
-			t, err := tail.NewSyslogFollower(f, server, channel)
-			if err != nil {
-				panic(err)
-			}
-
-			t.OnError(func(err error) {
-				panic(err)
-			})
-
-			followers = append(followers, t)
-		}
 	}
 
 	// determine once if there are any relabeling configurations for only the response counter
