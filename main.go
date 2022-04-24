@@ -38,6 +38,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/prometheus/common/version"
 )
 
 func main() {
@@ -49,7 +50,11 @@ func main() {
 			MetricsEndpoint: "/metrics",
 		},
 	}
-	nsGatherers := make(prometheus.Gatherers, 0)
+
+	versionMetrics := prometheus.NewRegistry()
+	versionMetrics.MustRegister(version.NewCollector("prometheus_nginxlog_exporter"))
+
+	gatherers := prometheus.Gatherers{versionMetrics}
 
 	flag.IntVar(&opts.ListenPort, "listen-port", 4040, "HTTP port to listen on")
 	flag.StringVar(&opts.ListenAddress, "listen-address", "0.0.0.0", "IP-address to bind")
@@ -62,7 +67,13 @@ func main() {
 	flag.StringVar(&opts.MemProfile, "memprofile", "", "write memory profile to `file`")
 	flag.StringVar(&opts.MetricsEndpoint, "metrics-endpoint", cfg.Listen.MetricsEndpoint, "URL path at which to serve metrics")
 	flag.BoolVar(&opts.VerifyConfig, "verify-config", false, "Enable this flag to check config file loads, then exit")
+	flag.BoolVar(&opts.Version, "version", false, "set to print version information")
 	flag.Parse()
+
+	if opts.Version {
+		fmt.Println(version.Print("prometheus-nginxlog-exporter"))
+		os.Exit(0)
+	}
 
 	opts.Filenames = flag.Args()
 
@@ -109,7 +120,7 @@ func main() {
 
 	for _, ns := range cfg.Namespaces {
 		nsMetrics := metrics.NewForNamespace(&ns)
-		nsGatherers = append(nsGatherers, nsMetrics.Gatherer())
+		gatherers = append(gatherers, nsMetrics.Gatherer())
 
 		fmt.Printf("starting listener for namespace %s\n", ns.Name)
 		go processNamespace(ns, &(nsMetrics.Collection))
@@ -121,7 +132,8 @@ func main() {
 	fmt.Printf("running HTTP server on address %s, serving metrics at %s\n", listenAddr, endpoint)
 
 	nsHandler := promhttp.InstrumentMetricHandler(
-		prometheus.DefaultRegisterer, promhttp.HandlerFor(nsGatherers, promhttp.HandlerOpts{}),
+		prometheus.DefaultRegisterer,
+		promhttp.HandlerFor(gatherers, promhttp.HandlerOpts{}),
 	)
 
 	http.Handle(endpoint, nsHandler)
