@@ -13,6 +13,7 @@ type StartupFlags struct {
 	EnableExperimentalFeatures bool
 	MetricsEndpoint            string
 	VerifyConfig               bool
+	Version                    bool
 
 	CPUProfile string
 	MemProfile string
