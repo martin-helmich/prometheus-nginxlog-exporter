@@ -7,6 +7,7 @@ builds:
       - linux
     goarch:
       - amd64
+      - arm64
 checksum:
   name_template: 'checksums.txt'
 snapshot:
@@ -20,20 +21,86 @@ changelog:
 dockers:
   - dockerfile: .goreleaser.Dockerfile
     image_templates:
-    - quay.io/martinhelmich/prometheus-nginxlog-exporter:latest
-    - quay.io/martinhelmich/prometheus-nginxlog-exporter:stable
-    - quay.io/martinhelmich/prometheus-nginxlog-exporter:v{{ .Major }}
-    - quay.io/martinhelmich/prometheus-nginxlog-exporter:v{{ .Major }}.{{ .Minor }}
-    - quay.io/martinhelmich/prometheus-nginxlog-exporter:{{ .Tag }}
-    - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:latest
-    - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:stable
-    - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:v{{ .Major }}
-    - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:v{{ .Major }}.{{ .Minor }}
-    - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:{{ .Tag }}
+    - quay.io/martinhelmich/prometheus-nginxlog-exporter:latest-amd64
+    - quay.io/martinhelmich/prometheus-nginxlog-exporter:stable-amd64
+    - quay.io/martinhelmich/prometheus-nginxlog-exporter:v{{ .Major }}-amd64
+    - quay.io/martinhelmich/prometheus-nginxlog-exporter:v{{ .Major }}.{{ .Minor }}-amd64
+    - quay.io/martinhelmich/prometheus-nginxlog-exporter:{{ .Tag }}-amd64
+    - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:latest-amd64
+    - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:stable-amd64
+    - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:v{{ .Major }}-amd64
+    - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:v{{ .Major }}.{{ .Minor }}-amd64
+    - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:{{ .Tag }}-amd64
+    use: buildx
+    build_flag_templates:
+      - "--platform=linux/amd64"
+      - "--build-arg=ARCH=amd64/"
     ids:
       - prometheus-nginxlog-exporter
     goos: linux
     goarch: amd64
+  - dockerfile: .goreleaser.Dockerfile
+    image_templates:
+    - quay.io/martinhelmich/prometheus-nginxlog-exporter:latest-arm64
+    - quay.io/martinhelmich/prometheus-nginxlog-exporter:stable-arm64
+    - quay.io/martinhelmich/prometheus-nginxlog-exporter:v{{ .Major }}-arm64
+    - quay.io/martinhelmich/prometheus-nginxlog-exporter:v{{ .Major }}.{{ .Minor }}-arm64
+    - quay.io/martinhelmich/prometheus-nginxlog-exporter:{{ .Tag }}-arm64
+    - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:latest-arm64
+    - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:stable-arm64
+    - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:v{{ .Major }}-arm64
+    - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:v{{ .Major }}.{{ .Minor }}-arm64
+    - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:{{ .Tag }}-arm64
+    use: buildx
+    build_flag_templates:
+      - "--platform=linux/arm64/v8"
+      - "--build-arg=ARCH=arm64v8/"
+    ids:
+      - prometheus-nginxlog-exporter
+    goos: linux
+    goarch: arm64
+docker_manifests:
+  - name_template: quay.io/martinhelmich/prometheus-nginxlog-exporter:latest
+    image_templates:
+      - quay.io/martinhelmich/prometheus-nginxlog-exporter:latest-amd64
+      - quay.io/martinhelmich/prometheus-nginxlog-exporter:latest-arm64
+  - name_template: quay.io/martinhelmich/prometheus-nginxlog-exporter:stable
+    image_templates:
+      - quay.io/martinhelmich/prometheus-nginxlog-exporter:stable-amd64
+      - quay.io/martinhelmich/prometheus-nginxlog-exporter:stable-arm64
+  - name_template: quay.io/martinhelmich/prometheus-nginxlog-exporter:v{{ .Major }}
+    image_templates:
+      - quay.io/martinhelmich/prometheus-nginxlog-exporter:v{{ .Major }}-amd64
+      - quay.io/martinhelmich/prometheus-nginxlog-exporter:v{{ .Major }}-arm64
+  - name_template: quay.io/martinhelmich/prometheus-nginxlog-exporter:v{{ .Major }}.{{ .Minor }}
+    image_templates:
+      - quay.io/martinhelmich/prometheus-nginxlog-exporter:v{{ .Major }}.{{ .Minor }}-amd64
+      - quay.io/martinhelmich/prometheus-nginxlog-exporter:v{{ .Major }}.{{ .Minor }}-arm64
+  - name_template: quay.io/martinhelmich/prometheus-nginxlog-exporter:{{ .Tag }}
+    image_templates:
+      - quay.io/martinhelmich/prometheus-nginxlog-exporter:{{ .Tag }}-amd64
+      - quay.io/martinhelmich/prometheus-nginxlog-exporter:{{ .Tag }}-arm64
+
+  - name_template: docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:latest
+    image_templates:
+      - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:latest-amd64
+      - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:latest-arm64
+  - name_template: docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:stable
+    image_templates:
+      - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:stable-amd64
+      - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:stable-arm64
+  - name_template: docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:v{{ .Major }}
+    image_templates:
+      - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:v{{ .Major }}-amd64
+      - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:v{{ .Major }}-arm64
+  - name_template: docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:v{{ .Major }}.{{ .Minor }}
+    image_templates:
+      - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:v{{ .Major }}.{{ .Minor }}-amd64
+      - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:v{{ .Major }}.{{ .Minor }}-arm64
+  - name_template: docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:{{ .Tag }}
+    image_templates:
+      - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:{{ .Tag }}-amd64
+      - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:{{ .Tag }}-arm64
 nfpms:
   - vendor: Martin Helmich
     homepage: https://github.com/martin-helmich/prometheus-nginxlog-exporter
