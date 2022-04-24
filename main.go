@@ -57,6 +57,8 @@ func NewNSMetrics(cfg *config.NamespaceConfig) *NSMetrics {
 	m.registry.MustRegister(m.responseBytesTotal)
 	m.registry.MustRegister(m.upstreamSeconds)
 	m.registry.MustRegister(m.upstreamSecondsHist)
+	m.registry.MustRegister(m.upstreamConnectSeconds)
+	m.registry.MustRegister(m.upstreamConnectSecondsHist)
 	m.registry.MustRegister(m.responseSeconds)
 	m.registry.MustRegister(m.responseSecondsHist)
 	m.registry.MustRegister(m.parseErrorsTotal)
@@ -66,14 +68,16 @@ func NewNSMetrics(cfg *config.NamespaceConfig) *NSMetrics {
 // Metrics is a struct containing pointers to all metrics that should be
 // exposed to Prometheus
 type Metrics struct {
-	countTotal          *prometheus.CounterVec
-	responseBytesTotal  *prometheus.CounterVec
-	requestBytesTotal   *prometheus.CounterVec
-	upstreamSeconds     *prometheus.SummaryVec
-	upstreamSecondsHist *prometheus.HistogramVec
-	responseSeconds     *prometheus.SummaryVec
-	responseSecondsHist *prometheus.HistogramVec
-	parseErrorsTotal    prometheus.Counter
+	countTotal                 *prometheus.CounterVec
+	responseBytesTotal         *prometheus.CounterVec
+	requestBytesTotal          *prometheus.CounterVec
+	upstreamSeconds            *prometheus.SummaryVec
+	upstreamSecondsHist        *prometheus.HistogramVec
+	upstreamConnectSeconds     *prometheus.SummaryVec
+	upstreamConnectSecondsHist *prometheus.HistogramVec
+	responseSeconds            *prometheus.SummaryVec
+	responseSecondsHist        *prometheus.HistogramVec
+	parseErrorsTotal           prometheus.Counter
 }
 
 func inLabels(label string, labels []string) bool {
@@ -142,6 +146,22 @@ func (m *Metrics) Init(cfg *config.NamespaceConfig) {
 		ConstLabels: cfg.NamespaceLabels,
 		Name:        "http_upstream_time_seconds_hist",
 		Help:        "Time needed by upstream servers to handle requests",
+		Buckets:     cfg.HistogramBuckets,
+	}, labels)
+
+	m.upstreamConnectSeconds = prometheus.NewSummaryVec(prometheus.SummaryOpts{
+		Namespace:   cfg.NamespacePrefix,
+		ConstLabels: cfg.NamespaceLabels,
+		Name:        "http_upstream_connect_time_seconds",
+		Help:        "Time needed to connect to upstream servers",
+		Objectives:  map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
+	}, labels)
+
+	m.upstreamConnectSecondsHist = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Namespace:   cfg.NamespacePrefix,
+		ConstLabels: cfg.NamespaceLabels,
+		Name:        "http_upstream_connect_time_seconds_hist",
+		Help:        "Time needed to connect to upstream servers",
 		Buckets:     cfg.HistogramBuckets,
 	}, labels)
 
@@ -410,6 +430,11 @@ func processSource(nsCfg config.NamespaceConfig, t tail.Follower, parser parser.
 		if v, ok := observeMetrics(fields, "upstream_response_time", floatFromFieldsMulti, metrics.parseErrorsTotal); ok {
 			metrics.upstreamSeconds.WithLabelValues(notCounterValues...).Observe(v)
 			metrics.upstreamSecondsHist.WithLabelValues(notCounterValues...).Observe(v)
+		}
+
+		if v, ok := observeMetrics(fields, "upstream_connect_time", floatFromFieldsMulti, metrics.parseErrorsTotal); ok {
+			metrics.upstreamConnectSeconds.WithLabelValues(notCounterValues...).Observe(v)
+			metrics.upstreamConnectSecondsHist.WithLabelValues(notCounterValues...).Observe(v)
 		}
 
 		if v, ok := observeMetrics(fields, "request_time", floatFromFields, metrics.parseErrorsTotal); ok {
