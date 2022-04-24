@@ -1,7 +1,7 @@
 package metrics
 
 import (
-	"github.com/martin-helmich/prometheus-nginxlog-exporter/config"
+	"github.com/martin-helmich/prometheus-nginxlog-exporter/pkg/config"
 	"github.com/prometheus/client_golang/prometheus"
 )
 

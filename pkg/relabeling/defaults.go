@@ -1,6 +1,6 @@
 package relabeling
 
-import "github.com/martin-helmich/prometheus-nginxlog-exporter/config"
+import "github.com/martin-helmich/prometheus-nginxlog-exporter/pkg/config"
 
 // DefaultRelabelings are hardcoded relabeling configs that are always there
 // and do not need to be explicitly configured

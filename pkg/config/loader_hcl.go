@@ -1,9 +1,10 @@
 package config
 
 import (
-	"github.com/hashicorp/hcl"
 	"io"
 	"io/ioutil"
+
+	"github.com/hashicorp/hcl"
 )
 
 func loadConfigFromHCLStream(config *Config, file io.Reader) error {

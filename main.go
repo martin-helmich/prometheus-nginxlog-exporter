@@ -27,15 +27,15 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/martin-helmich/prometheus-nginxlog-exporter/pkg/config"
+	"github.com/martin-helmich/prometheus-nginxlog-exporter/pkg/discovery"
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/pkg/metrics"
-	"github.com/martin-helmich/prometheus-nginxlog-exporter/syslog"
+	"github.com/martin-helmich/prometheus-nginxlog-exporter/pkg/parser"
+	"github.com/martin-helmich/prometheus-nginxlog-exporter/pkg/prof"
+	"github.com/martin-helmich/prometheus-nginxlog-exporter/pkg/relabeling"
+	"github.com/martin-helmich/prometheus-nginxlog-exporter/pkg/syslog"
+	"github.com/martin-helmich/prometheus-nginxlog-exporter/pkg/tail"
 
-	"github.com/martin-helmich/prometheus-nginxlog-exporter/config"
-	"github.com/martin-helmich/prometheus-nginxlog-exporter/discovery"
-	"github.com/martin-helmich/prometheus-nginxlog-exporter/parser"
-	"github.com/martin-helmich/prometheus-nginxlog-exporter/prof"
-	"github.com/martin-helmich/prometheus-nginxlog-exporter/relabeling"
-	"github.com/martin-helmich/prometheus-nginxlog-exporter/tail"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )

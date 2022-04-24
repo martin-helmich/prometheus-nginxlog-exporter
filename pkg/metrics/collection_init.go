@@ -1,8 +1,8 @@
 package metrics
 
 import (
-	"github.com/martin-helmich/prometheus-nginxlog-exporter/config"
-	"github.com/martin-helmich/prometheus-nginxlog-exporter/relabeling"
+	"github.com/martin-helmich/prometheus-nginxlog-exporter/pkg/config"
+	"github.com/martin-helmich/prometheus-nginxlog-exporter/pkg/relabeling"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
