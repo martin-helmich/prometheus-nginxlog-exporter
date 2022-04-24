@@ -27,6 +27,7 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/martin-helmich/prometheus-nginxlog-exporter/pkg/metrics"
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/syslog"
 
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/config"
@@ -38,156 +39,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
-
-type NSMetrics struct {
-	cfg      *config.NamespaceConfig
-	registry *prometheus.Registry
-	Metrics
-}
-
-func NewNSMetrics(cfg *config.NamespaceConfig) *NSMetrics {
-	m := &NSMetrics{
-		cfg:      cfg,
-		registry: prometheus.NewRegistry(),
-	}
-	m.Init(cfg)
-
-	m.registry.MustRegister(m.countTotal)
-	m.registry.MustRegister(m.requestBytesTotal)
-	m.registry.MustRegister(m.responseBytesTotal)
-	m.registry.MustRegister(m.upstreamSeconds)
-	m.registry.MustRegister(m.upstreamSecondsHist)
-	m.registry.MustRegister(m.upstreamConnectSeconds)
-	m.registry.MustRegister(m.upstreamConnectSecondsHist)
-	m.registry.MustRegister(m.responseSeconds)
-	m.registry.MustRegister(m.responseSecondsHist)
-	m.registry.MustRegister(m.parseErrorsTotal)
-	return m
-}
-
-// Metrics is a struct containing pointers to all metrics that should be
-// exposed to Prometheus
-type Metrics struct {
-	countTotal                 *prometheus.CounterVec
-	responseBytesTotal         *prometheus.CounterVec
-	requestBytesTotal          *prometheus.CounterVec
-	upstreamSeconds            *prometheus.SummaryVec
-	upstreamSecondsHist        *prometheus.HistogramVec
-	upstreamConnectSeconds     *prometheus.SummaryVec
-	upstreamConnectSecondsHist *prometheus.HistogramVec
-	responseSeconds            *prometheus.SummaryVec
-	responseSecondsHist        *prometheus.HistogramVec
-	parseErrorsTotal           prometheus.Counter
-}
-
-func inLabels(label string, labels []string) bool {
-	for _, l := range labels {
-		if label == l {
-			return true
-		}
-	}
-	return false
-}
-
-// Init initializes a metrics struct
-func (m *Metrics) Init(cfg *config.NamespaceConfig) {
-	cfg.MustCompile()
-
-	labels := cfg.OrderedLabelNames
-	counterLabels := labels
-
-	for i := range cfg.RelabelConfigs {
-		if !cfg.RelabelConfigs[i].OnlyCounter {
-			labels = append(labels, cfg.RelabelConfigs[i].TargetLabel)
-		}
-		counterLabels = append(counterLabels, cfg.RelabelConfigs[i].TargetLabel)
-	}
-
-	for _, r := range relabeling.DefaultRelabelings {
-		if !inLabels(r.TargetLabel, labels) {
-			labels = append(labels, r.TargetLabel)
-		}
-		if !inLabels(r.TargetLabel, counterLabels) {
-			counterLabels = append(counterLabels, r.TargetLabel)
-		}
-	}
-
-	m.countTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Namespace:   cfg.NamespacePrefix,
-		ConstLabels: cfg.NamespaceLabels,
-		Name:        "http_response_count_total",
-		Help:        "Amount of processed HTTP requests",
-	}, counterLabels)
-
-	m.responseBytesTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Namespace:   cfg.NamespacePrefix,
-		ConstLabels: cfg.NamespaceLabels,
-		Name:        "http_response_size_bytes",
-		Help:        "Total amount of transferred bytes",
-	}, labels)
-
-	m.requestBytesTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Namespace:   cfg.NamespacePrefix,
-		ConstLabels: cfg.NamespaceLabels,
-		Name:        "http_request_size_bytes",
-		Help:        "Total amount of received bytes",
-	}, labels)
-
-	m.upstreamSeconds = prometheus.NewSummaryVec(prometheus.SummaryOpts{
-		Namespace:   cfg.NamespacePrefix,
-		ConstLabels: cfg.NamespaceLabels,
-		Name:        "http_upstream_time_seconds",
-		Help:        "Time needed by upstream servers to handle requests",
-		Objectives:  map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
-	}, labels)
-
-	m.upstreamSecondsHist = prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Namespace:   cfg.NamespacePrefix,
-		ConstLabels: cfg.NamespaceLabels,
-		Name:        "http_upstream_time_seconds_hist",
-		Help:        "Time needed by upstream servers to handle requests",
-		Buckets:     cfg.HistogramBuckets,
-	}, labels)
-
-	m.upstreamConnectSeconds = prometheus.NewSummaryVec(prometheus.SummaryOpts{
-		Namespace:   cfg.NamespacePrefix,
-		ConstLabels: cfg.NamespaceLabels,
-		Name:        "http_upstream_connect_time_seconds",
-		Help:        "Time needed to connect to upstream servers",
-		Objectives:  map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
-	}, labels)
-
-	m.upstreamConnectSecondsHist = prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Namespace:   cfg.NamespacePrefix,
-		ConstLabels: cfg.NamespaceLabels,
-		Name:        "http_upstream_connect_time_seconds_hist",
-		Help:        "Time needed to connect to upstream servers",
-		Buckets:     cfg.HistogramBuckets,
-	}, labels)
-
-	m.responseSeconds = prometheus.NewSummaryVec(prometheus.SummaryOpts{
-		Namespace:   cfg.NamespacePrefix,
-		ConstLabels: cfg.NamespaceLabels,
-		Name:        "http_response_time_seconds",
-		Help:        "Time needed by NGINX to handle requests",
-		Objectives:  map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
-	}, labels)
-
-	m.responseSecondsHist = prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Namespace:   cfg.NamespacePrefix,
-		ConstLabels: cfg.NamespaceLabels,
-		Name:        "http_response_time_seconds_hist",
-		Help:        "Time needed by NGINX to handle requests",
-		Buckets:     cfg.HistogramBuckets,
-	}, labels)
-
-	m.parseErrorsTotal = prometheus.NewCounter(prometheus.CounterOpts{
-		Namespace:   cfg.NamespacePrefix,
-		ConstLabels: cfg.NamespaceLabels,
-		Name:        "parse_errors_total",
-		Help:        "Total number of log file lines that could not be parsed",
-	})
-}
 
 func main() {
 	var opts config.StartupFlags
@@ -257,11 +108,11 @@ func main() {
 	}
 
 	for _, ns := range cfg.Namespaces {
-		nsMetrics := NewNSMetrics(&ns)
-		nsGatherers = append(nsGatherers, nsMetrics.registry)
+		nsMetrics := metrics.NewForNamespace(&ns)
+		nsGatherers = append(nsGatherers, nsMetrics.Gatherer())
 
 		fmt.Printf("starting listener for namespace %s\n", ns.Name)
-		go processNamespace(ns, &(nsMetrics.Metrics))
+		go processNamespace(ns, &(nsMetrics.Collection))
 	}
 
 	listenAddr := fmt.Sprintf("%s:%d", cfg.Listen.Address, cfg.Listen.Port)
@@ -320,7 +171,7 @@ func setupConsul(cfg *config.Config, stopChan <-chan bool, stopHandlers *sync.Wa
 	stopHandlers.Add(1)
 }
 
-func processNamespace(nsCfg config.NamespaceConfig, metrics *Metrics) {
+func processNamespace(nsCfg config.NamespaceConfig, metrics *metrics.Collection) {
 	var followers []tail.Follower
 
 	parser := parser.NewParser(nsCfg)
@@ -376,7 +227,7 @@ func processNamespace(nsCfg config.NamespaceConfig, metrics *Metrics) {
 
 }
 
-func processSource(nsCfg config.NamespaceConfig, t tail.Follower, parser parser.Parser, metrics *Metrics, hasCounterOnlyLabels bool) {
+func processSource(nsCfg config.NamespaceConfig, t tail.Follower, parser parser.Parser, metrics *metrics.Collection, hasCounterOnlyLabels bool) {
 	relabelings := relabeling.NewRelabelings(nsCfg.RelabelConfigs)
 	relabelings = append(relabelings, relabeling.DefaultRelabelings...)
 	relabelings = relabeling.UniqueRelabelings(relabelings)
@@ -397,7 +248,7 @@ func processSource(nsCfg config.NamespaceConfig, t tail.Follower, parser parser.
 		fields, err := parser.ParseString(line)
 		if err != nil {
 			fmt.Printf("error while parsing line '%s': %s\n", line, err)
-			metrics.parseErrorsTotal.Inc()
+			metrics.ParseErrorsTotal.Inc()
 			continue
 		}
 
@@ -417,29 +268,29 @@ func processSource(nsCfg config.NamespaceConfig, t tail.Follower, parser parser.
 			notCounterValues = labelValues
 		}
 
-		metrics.countTotal.WithLabelValues(labelValues...).Inc()
+		metrics.CountTotal.WithLabelValues(labelValues...).Inc()
 
-		if v, ok := observeMetrics(fields, "body_bytes_sent", floatFromFields, metrics.parseErrorsTotal); ok {
-			metrics.responseBytesTotal.WithLabelValues(notCounterValues...).Add(v)
+		if v, ok := observeMetrics(fields, "body_bytes_sent", floatFromFields, metrics.ParseErrorsTotal); ok {
+			metrics.ResponseBytesTotal.WithLabelValues(notCounterValues...).Add(v)
 		}
 
-		if v, ok := observeMetrics(fields, "request_length", floatFromFields, metrics.parseErrorsTotal); ok {
-			metrics.requestBytesTotal.WithLabelValues(notCounterValues...).Add(v)
+		if v, ok := observeMetrics(fields, "request_length", floatFromFields, metrics.ParseErrorsTotal); ok {
+			metrics.RequestBytesTotal.WithLabelValues(notCounterValues...).Add(v)
 		}
 
-		if v, ok := observeMetrics(fields, "upstream_response_time", floatFromFieldsMulti, metrics.parseErrorsTotal); ok {
-			metrics.upstreamSeconds.WithLabelValues(notCounterValues...).Observe(v)
-			metrics.upstreamSecondsHist.WithLabelValues(notCounterValues...).Observe(v)
+		if v, ok := observeMetrics(fields, "upstream_response_time", floatFromFieldsMulti, metrics.ParseErrorsTotal); ok {
+			metrics.UpstreamSeconds.WithLabelValues(notCounterValues...).Observe(v)
+			metrics.UpstreamSecondsHist.WithLabelValues(notCounterValues...).Observe(v)
 		}
 
-		if v, ok := observeMetrics(fields, "upstream_connect_time", floatFromFieldsMulti, metrics.parseErrorsTotal); ok {
-			metrics.upstreamConnectSeconds.WithLabelValues(notCounterValues...).Observe(v)
-			metrics.upstreamConnectSecondsHist.WithLabelValues(notCounterValues...).Observe(v)
+		if v, ok := observeMetrics(fields, "upstream_connect_time", floatFromFieldsMulti, metrics.ParseErrorsTotal); ok {
+			metrics.UpstreamConnectSeconds.WithLabelValues(notCounterValues...).Observe(v)
+			metrics.UpstreamConnectSecondsHist.WithLabelValues(notCounterValues...).Observe(v)
 		}
 
-		if v, ok := observeMetrics(fields, "request_time", floatFromFields, metrics.parseErrorsTotal); ok {
-			metrics.responseSeconds.WithLabelValues(notCounterValues...).Observe(v)
-			metrics.responseSecondsHist.WithLabelValues(notCounterValues...).Observe(v)
+		if v, ok := observeMetrics(fields, "request_time", floatFromFields, metrics.ParseErrorsTotal); ok {
+			metrics.ResponseSeconds.WithLabelValues(notCounterValues...).Observe(v)
+			metrics.ResponseSecondsHist.WithLabelValues(notCounterValues...).Observe(v)
 		}
 	}
 }
