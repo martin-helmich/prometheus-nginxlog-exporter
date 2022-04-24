@@ -102,3 +102,12 @@ Feature: Various issues reported in the bug tracker remain solved
     Then the exporter should report value 0 for metric test_parse_errors_total
     Then the exporter should report value 4 for metric test_http_upstream_time_seconds_sum{method="GET",status="200"}
 
+  Scenario: Issue 247: Parsing IPv6 addresses
+    Given a running exporter listening with configuration file "test-config-issue247.hcl"
+    When the following HTTP request is logged to "access.log"
+      """
+      [17/Mar/2022:16:40:25 +0000] - 200 200 - GET https admin.staging.acarat.nl "/login" [Client 2001:1c04:aaaa:bbbb::1234] [Length 1101] [Gzip -] [Sent-to 172.16.101.54] "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4863.0 Safari/537.36 Edg/100.0.1163.1" "-"
+      """
+    Then the exporter should report value 0 for metric nginx_proxy_staging_api_parse_errors_total
+    Then the exporter should report value 1 for metric nginx_proxy_staging_api_http_response_count_total{app="acarat_staging_api",method="GET",status="200"}
+
