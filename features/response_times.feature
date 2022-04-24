@@ -19,6 +19,17 @@ Feature: Upstream response times are summarized
       """
     Then the exporter should report value 20 for metric nginx_http_upstream_time_seconds{method="GET",status="200",quantile="0.5"}
 
+  Scenario: .5 quantile of upstream connect time is computed
+    Given a running exporter listening on "access.log" with upstream-connect-time format
+    When the following HTTP request is logged to "access.log"
+      """
+      172.17.0.1 - - [23/Jun/2016:16:04:20 +0000] "GET / HTTP/1.1" 200 612 "-" "curl/7.29.0" "-" 10 5
+      172.17.0.1 - - [23/Jun/2016:16:04:20 +0000] "GET / HTTP/1.1" 200 612 "-" "curl/7.29.0" "-" 20 5
+      172.17.0.1 - - [23/Jun/2016:16:04:20 +0000] "GET / HTTP/1.1" 200 612 "-" "curl/7.29.0" "-" 30 10
+      172.17.0.1 - - [23/Jun/2016:16:04:20 +0000] "GET / HTTP/1.1" 200 612 "-" "curl/7.29.0" "-" 40 10
+      """
+    Then the exporter should report value 5 for metric nginx_http_upstream_connect_time_seconds{method="GET",status="200",quantile="0.5"}
+
   Scenario: .5 quantile of response time is computed
     Given a running exporter listening on "access.log" with request-time format
     When the following HTTP request is logged to "access.log"

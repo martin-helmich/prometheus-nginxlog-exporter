@@ -1,9 +1,10 @@
 package config
 
 import (
-	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
+
+	"gopkg.in/yaml.v2"
 )
 
 func loadConfigFromYAMLStream(config *Config, file io.Reader) error {
