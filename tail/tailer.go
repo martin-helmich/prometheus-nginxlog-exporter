@@ -3,7 +3,7 @@ package tail
 import (
 	"os"
 
-	"github.com/hpcloud/tail"
+	"github.com/nxadm/tail"
 )
 
 type followerImpl struct {
