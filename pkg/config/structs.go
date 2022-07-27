@@ -14,6 +14,7 @@ type StartupFlags struct {
 	MetricsEndpoint            string
 	VerifyConfig               bool
 	Version                    bool
+	WebConfigFile              string
 
 	CPUProfile string
 	MemProfile string
