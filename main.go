@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Martin Helmich <martin@helmich.me>
+ * Copyright 2019-2022 Martin Helmich <martin@helmich.me>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,11 +35,14 @@ import (
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/pkg/relabeling"
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/pkg/syslog"
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/pkg/tail"
+	"github.com/pkg/errors"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/common/version"
 )
+
+const maxStaticLabels = 128
 
 func main() {
 	var opts config.StartupFlags
@@ -118,12 +121,16 @@ func main() {
 		setupConsul(&cfg, stopChan, &stopHandlers)
 	}
 
-	for _, ns := range cfg.Namespaces {
-		nsMetrics := metrics.NewForNamespace(&ns)
+	for i := range cfg.Namespaces {
+		namespace := &cfg.Namespaces[i]
+
+		nsMetrics := metrics.NewForNamespace(namespace)
 		gatherers = append(gatherers, nsMetrics.Gatherer())
 
-		fmt.Printf("starting listener for namespace %s\n", ns.Name)
-		go processNamespace(ns, &(nsMetrics.Collection))
+		fmt.Printf("starting listener for namespace %s\n", namespace.Name)
+		go func(ns *config.NamespaceConfig) {
+			processNamespace(ns, &(nsMetrics.Collection))
+		}(namespace)
 	}
 
 	listenAddr := fmt.Sprintf("%s:%d", cfg.Listen.Address, cfg.Listen.Port)
@@ -183,7 +190,7 @@ func setupConsul(cfg *config.Config, stopChan <-chan bool, stopHandlers *sync.Wa
 	stopHandlers.Add(1)
 }
 
-func processNamespace(nsCfg config.NamespaceConfig, metrics *metrics.Collection) {
+func processNamespace(nsCfg *config.NamespaceConfig, metrics *metrics.Collection) error {
 	var followers []tail.Follower
 
 	parser := parser.NewParser(nsCfg)
@@ -233,13 +240,21 @@ func processNamespace(nsCfg config.NamespaceConfig, metrics *metrics.Collection)
 		}
 	}
 
-	for _, f := range followers {
-		go processSource(nsCfg, f, parser, metrics, hasCounterOnlyLabels)
+	errs := make(chan error)
+	defer close(errs)
+
+	for _, follower := range followers {
+		go func(f tail.Follower) {
+			if err := processSource(nsCfg, f, parser, metrics, hasCounterOnlyLabels); err != nil {
+				errs <- err
+			}
+		}(follower)
 	}
 
+	return <-errs
 }
 
-func processSource(nsCfg config.NamespaceConfig, t tail.Follower, parser parser.Parser, metrics *metrics.Collection, hasCounterOnlyLabels bool) {
+func processSource(nsCfg *config.NamespaceConfig, t tail.Follower, parser parser.Parser, metrics *metrics.Collection, hasCounterOnlyLabels bool) error {
 	relabelings := relabeling.NewRelabelings(nsCfg.RelabelConfigs)
 	relabelings = append(relabelings, relabeling.DefaultRelabelings...)
 	relabelings = relabeling.UniqueRelabelings(relabelings)
@@ -248,6 +263,11 @@ func processSource(nsCfg config.NamespaceConfig, t tail.Follower, parser parser.
 
 	totalLabelCount := len(staticLabelValues) + len(relabelings)
 	relabelLabelOffset := len(staticLabelValues)
+
+	if totalLabelCount > maxStaticLabels {
+		return errors.Errorf("configured label count exceeds the maximum count of %d", maxStaticLabels)
+	}
+
 	labelValues := make([]string, totalLabelCount)
 
 	copy(labelValues, staticLabelValues)
@@ -305,6 +325,8 @@ func processSource(nsCfg config.NamespaceConfig, t tail.Follower, parser parser.
 			metrics.ResponseSecondsHist.WithLabelValues(notCounterValues...).Observe(v)
 		}
 	}
+
+	return nil
 }
 
 func observeMetrics(fields map[string]string, name string, extractor func(map[string]string, string) (float64, bool, error), parseErrors prometheus.Counter) (float64, bool) {
