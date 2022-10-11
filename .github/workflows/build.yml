@@ -91,7 +91,7 @@ jobs:
       - name: Validate Goreleaser config
         uses: goreleaser/goreleaser-action@v2
         with:
-          version: v1.8.3
+          version: v1.11.5
           args: check
 
       - name: Set current date
@@ -99,10 +99,27 @@ jobs:
         run: |
           echo "BUILD_DATE=$(date)" >> $GITHUB_ENV
 
+      - name: Generate temporary dummy key for signing
+        run: |
+          apt-get update
+          apt-get install -y gnupg
+          export GNUPGHOME=/tmp
+          gpg --batch --gen-key <<EOF
+          %no-protection
+          Key-Type: 1
+          Key-Length: 2048
+          Subkey-Type: 1
+          Subkey-Length: 2048
+          Name-Real: Github Action
+          Name-Email: helmich-bot@helmich.example
+          Expire-Date: seconds=30
+          EOF
+          gpg --export-secret-key --armor helmich-bot@helmich.example > /tmp/signing-key
+
       - name: Build Goreleaser snapshot release
         uses: goreleaser/goreleaser-action@v2
         with:
-          version: v1.8.3
+          version: v1.11.5
           args: release --rm-dist --skip-publish --snapshot
         env:
           BUILD_USER: ${{ github.actor }} (via Github Actions)
