@@ -92,6 +92,20 @@ Feature: Various issues reported in the bug tracker remain solved
     Then the exporter should report value 3 for metric http_parse_errors_total{vhost="test"}
     And the exporter should report value 2 for metric http_parse_errors_total{vhost="test2"}
 
+  Scenario: Issue 216: Cannot set only_counter for status, daemon panics
+    Given a running exporter listening with configuration file "test-config-issue216.hcl"
+    When the following HTTP request is logged to "access.log"
+      """
+      172.17.0.1 - - [23/Jun/2016:16:04:20 +0000] "GET / HTTP/1.1" 200 612 "-" "curl/7.29.0" "-" 10 10
+      172.17.0.1 - - [23/Jun/2016:16:04:20 +0000] "POST / HTTP/1.1" 200 612 "-" "curl/7.29.0" "-" 10 10
+      172.17.0.1 - - [23/Jun/2016:16:04:20 +0000] "GET / HTTP/1.1" 500 612 "-" "curl/7.29.0" "-" 10 10
+      172.17.0.1 - - [23/Jun/2016:16:04:20 +0000] "GET / HTTP/1.1" 418 612 "-" "curl/7.29.0" "-" 10 10
+      """
+    Then the process should be running
+    And the exporter should report value 1 for metric nginx_http_response_count_total{method="GET",status="200"}
+    And the exporter should report value 1 for metric nginx_http_response_count_total{method="other",status="200"}
+    And the exporter should report value 4 for metric nginx_http_response_time_seconds_hist_count
+
   Scenario: Issue 224: Missing float values
     Given a running exporter listening with configuration file "test-config-issue217.yaml"
     When the following HTTP request is logged to "access.log"
@@ -101,4 +115,3 @@ Feature: Various issues reported in the bug tracker remain solved
       """
     Then the exporter should report value 0 for metric test_parse_errors_total
     Then the exporter should report value 4 for metric test_http_upstream_time_seconds_sum{method="GET",status="200"}
-

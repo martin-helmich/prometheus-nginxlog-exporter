@@ -98,3 +98,10 @@ def step_impl(context, val, metric, endpoint='/metrics'):
     if not "%s %s" % (metric, val) in lines:
         raise AssertionError(
             'expected metric "%s" could not be verified. Actual metrics:\n%s' % (metric, text))
+
+
+@then("the process should be running")
+def step_impl(context):
+    rc = context.process.poll()
+    if rc is not None:
+        raise AssertionError(f"The process has exited with return code {rc}")

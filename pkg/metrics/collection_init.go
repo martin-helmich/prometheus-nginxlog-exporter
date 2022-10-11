@@ -6,15 +6,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-func inLabels(label string, labels []string) bool {
-	for _, l := range labels {
-		if label == l {
-			return true
-		}
-	}
-	return false
-}
-
 // Init initializes a metrics struct
 func (m *Collection) Init(cfg *config.NamespaceConfig) {
 	cfg.MustCompile()
@@ -22,20 +13,15 @@ func (m *Collection) Init(cfg *config.NamespaceConfig) {
 	labels := cfg.OrderedLabelNames
 	counterLabels := labels
 
-	for i := range cfg.RelabelConfigs {
-		if !cfg.RelabelConfigs[i].OnlyCounter {
-			labels = append(labels, cfg.RelabelConfigs[i].TargetLabel)
-		}
-		counterLabels = append(counterLabels, cfg.RelabelConfigs[i].TargetLabel)
-	}
+	relabelings := relabeling.NewRelabelings(cfg.RelabelConfigs)
+	relabelings = append(relabelings, relabeling.DefaultRelabelings...)
+	relabelings = relabeling.UniqueRelabelings(relabelings)
 
-	for _, r := range relabeling.DefaultRelabelings {
-		if !inLabels(r.TargetLabel, labels) {
+	for _, r := range relabelings {
+		if !r.OnlyCounter {
 			labels = append(labels, r.TargetLabel)
 		}
-		if !inLabels(r.TargetLabel, counterLabels) {
-			counterLabels = append(counterLabels, r.TargetLabel)
-		}
+		counterLabels = append(counterLabels, r.TargetLabel)
 	}
 
 	m.CountTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
