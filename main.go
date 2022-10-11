@@ -353,7 +353,7 @@ func floatFromFieldsMulti(fields map[string]string, name string) (float64, bool,
 
 	sum := float64(0)
 
-	for _, v := range strings.Split(val, ",") {
+	for _, v := range strings.FieldsFunc(val, func(r rune) bool { return r == ',' || r == ':' }) {
 		v = strings.TrimSpace(v)
 
 		if v == "-" {
