@@ -12,7 +12,7 @@ type Parser interface {
 }
 
 // NewParser returns a Parser with the given config.NamespaceConfig.
-func NewParser(nsCfg config.NamespaceConfig) Parser {
+func NewParser(nsCfg *config.NamespaceConfig) Parser {
 	switch nsCfg.Parser {
 	case "text":
 		return textparser.NewTextParser(nsCfg.Format)
