@@ -101,8 +101,8 @@ jobs:
 
       - name: Generate temporary dummy key for signing
         run: |
-          apt-get update
-          apt-get install -y gnupg
+          sudo apt-get update
+          sudo apt-get install -y gnupg
           export GNUPGHOME=/tmp
           gpg --batch --gen-key <<EOF
           %no-protection
