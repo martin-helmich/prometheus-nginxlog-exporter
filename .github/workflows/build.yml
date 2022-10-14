@@ -106,13 +106,13 @@ jobs:
           export GNUPGHOME=/tmp
           gpg --batch --gen-key <<EOF
           %no-protection
-          Key-Type: 1
+          Key-Type: default
           Key-Length: 2048
-          Subkey-Type: 1
+          Subkey-Type: default
           Subkey-Length: 2048
           Name-Real: Github Action
           Name-Email: helmich-bot@helmich.example
-          Expire-Date: seconds=30
+          Expire-Date: seconds=120
           EOF
           gpg --export-secret-key --armor helmich-bot@helmich.example > /tmp/signing-key
 
