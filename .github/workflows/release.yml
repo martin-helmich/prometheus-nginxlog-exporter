@@ -39,11 +39,14 @@ jobs:
         id: set_date
         run: |
           echo "BUILD_DATE=$(date)" >> $GITHUB_ENV
+
+      - name: Export signing key
+        run: 'echo "${{ secrets.PKG_SIGNING_KEY }}" > /tmp/signing-key'
           
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v2
         with:
-          version: v1.8.3
+          version: v1.11.5
           args: release --rm-dist
         env:
           BUILD_USER: ${{ github.actor }} (via Github Actions)
