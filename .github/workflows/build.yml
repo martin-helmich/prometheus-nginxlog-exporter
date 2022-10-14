@@ -89,7 +89,7 @@ jobs:
           go-version: 1.18.x
 
       - name: Validate Goreleaser config
-        uses: goreleaser/goreleaser-action@v2
+        uses: goreleaser/goreleaser-action@v3
         with:
           version: v1.11.5
           args: check
@@ -117,7 +117,7 @@ jobs:
           gpg --export-secret-key --armor helmich-bot@helmich.example > /tmp/signing-key
 
       - name: Build Goreleaser snapshot release
-        uses: goreleaser/goreleaser-action@v2
+        uses: goreleaser/goreleaser-action@v3
         with:
           version: v1.11.5
           args: release --rm-dist --skip-publish --snapshot
