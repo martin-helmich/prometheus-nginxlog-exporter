@@ -93,26 +93,6 @@ docker_manifests:
       - quay.io/martinhelmich/prometheus-nginxlog-exporter:{{ .Tag }}-amd64
       - quay.io/martinhelmich/prometheus-nginxlog-exporter:{{ .Tag }}-arm64
 
-  - name_template: docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:latest
-    image_templates:
-      - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:latest-amd64
-      - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:latest-arm64
-  - name_template: docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:stable
-    image_templates:
-      - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:stable-amd64
-      - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:stable-arm64
-  - name_template: docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:v{{ .Major }}
-    image_templates:
-      - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:v{{ .Major }}-amd64
-      - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:v{{ .Major }}-arm64
-  - name_template: docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:v{{ .Major }}.{{ .Minor }}
-    image_templates:
-      - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:v{{ .Major }}.{{ .Minor }}-amd64
-      - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:v{{ .Major }}.{{ .Minor }}-arm64
-  - name_template: docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:{{ .Tag }}
-    image_templates:
-      - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:{{ .Tag }}-amd64
-      - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:{{ .Tag }}-arm64
 nfpms:
   - vendor: Martin Helmich
     homepage: https://github.com/martin-helmich/prometheus-nginxlog-exporter
