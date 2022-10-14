@@ -14,10 +14,12 @@ builds:
         -s
         -w
         -X "github.com/prometheus/common/version.Version={{.Version}}"
+        {{- if index .Env "GITHUB_REF_NAME" }}
         -X "github.com/prometheus/common/version.Branch={{.Env.GITHUB_REF_NAME}}"
         -X "github.com/prometheus/common/version.Revision={{.Env.GITHUB_SHA}}"
         -X "github.com/prometheus/common/version.BuildUser={{ .Env.BUILD_USER }}"
         -X "github.com/prometheus/common/version.BuildDate={{.Env.BUILD_DATE}}"
+        {{- end }}
 checksum:
   name_template: 'checksums.txt'
 snapshot:
@@ -131,3 +133,10 @@ nfpms:
         type: config|noreplace
     scripts:
       postinstall: res/package/scripts/postinstall.sh
+    rpm:
+      signature:
+        key_file: /tmp/signing-key
+    deb:
+      signature:
+        key_file: /tmp/signing-key
+        type: origin
