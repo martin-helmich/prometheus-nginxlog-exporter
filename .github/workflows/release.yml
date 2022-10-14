@@ -44,7 +44,7 @@ jobs:
         run: 'echo "${{ secrets.PKG_SIGNING_KEY }}" > /tmp/signing-key'
           
       - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v2
+        uses: goreleaser/goreleaser-action@v3
         with:
           version: v1.11.5
           args: release --rm-dist
