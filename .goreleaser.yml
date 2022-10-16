@@ -14,10 +14,12 @@ builds:
         -s
         -w
         -X "github.com/prometheus/common/version.Version={{.Version}}"
+        {{- if index .Env "GITHUB_REF_NAME" }}
         -X "github.com/prometheus/common/version.Branch={{.Env.GITHUB_REF_NAME}}"
         -X "github.com/prometheus/common/version.Revision={{.Env.GITHUB_SHA}}"
         -X "github.com/prometheus/common/version.BuildUser={{ .Env.BUILD_USER }}"
         -X "github.com/prometheus/common/version.BuildDate={{.Env.BUILD_DATE}}"
+        {{- end }}
 checksum:
   name_template: 'checksums.txt'
 snapshot:
@@ -91,26 +93,6 @@ docker_manifests:
       - quay.io/martinhelmich/prometheus-nginxlog-exporter:{{ .Tag }}-amd64
       - quay.io/martinhelmich/prometheus-nginxlog-exporter:{{ .Tag }}-arm64
 
-  - name_template: docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:latest
-    image_templates:
-      - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:latest-amd64
-      - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:latest-arm64
-  - name_template: docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:stable
-    image_templates:
-      - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:stable-amd64
-      - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:stable-arm64
-  - name_template: docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:v{{ .Major }}
-    image_templates:
-      - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:v{{ .Major }}-amd64
-      - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:v{{ .Major }}-arm64
-  - name_template: docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:v{{ .Major }}.{{ .Minor }}
-    image_templates:
-      - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:v{{ .Major }}.{{ .Minor }}-amd64
-      - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:v{{ .Major }}.{{ .Minor }}-arm64
-  - name_template: docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:{{ .Tag }}
-    image_templates:
-      - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:{{ .Tag }}-amd64
-      - docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:{{ .Tag }}-arm64
 nfpms:
   - vendor: Martin Helmich
     homepage: https://github.com/martin-helmich/prometheus-nginxlog-exporter
@@ -131,3 +113,10 @@ nfpms:
         type: config|noreplace
     scripts:
       postinstall: res/package/scripts/postinstall.sh
+    rpm:
+      signature:
+        key_file: /tmp/signing-key
+    deb:
+      signature:
+        key_file: /tmp/signing-key
+        type: origin
