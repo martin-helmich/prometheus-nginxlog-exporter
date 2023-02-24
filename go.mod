@@ -1,7 +1,7 @@
 module github.com/martin-helmich/prometheus-nginxlog-exporter
 
 require (
-	github.com/hashicorp/consul/api v1.18.0
+	github.com/hashicorp/consul/api v1.19.1
 	github.com/hashicorp/hcl v1.0.0
 	github.com/mitchellh/mapstructure v1.4.1 // indirect
 	github.com/nxadm/tail v1.4.8
