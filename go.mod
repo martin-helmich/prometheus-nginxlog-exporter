@@ -9,7 +9,7 @@ require (
 	github.com/prometheus/client_golang v1.14.0
 	github.com/prometheus/common v0.39.0
 	github.com/satyrius/gonx v1.3.1-0.20180709120835-47c52b995fe5
-	github.com/stretchr/testify v1.8.1
+	github.com/stretchr/testify v1.8.2
 	gopkg.in/mcuadros/go-syslog.v2 v2.3.0
 	gopkg.in/yaml.v2 v2.4.0
 )
