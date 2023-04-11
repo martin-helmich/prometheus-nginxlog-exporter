@@ -303,11 +303,11 @@ func processSource(nsCfg *config.NamespaceConfig, t tail.Follower, parser parser
 		metrics.CountTotal.WithLabelValues(labelValues...).Inc()
 
 		if v, ok := observeMetrics(fields, "body_bytes_sent", floatFromFields, metrics.ParseErrorsTotal); ok {
-			metrics.ResponseBytesTotal.WithLabelValues(notCounterValues...).Add(v)
+			metrics.ResponseBytesTotal.WithLabelValues(labelValues...).Add(v)
 		}
 
 		if v, ok := observeMetrics(fields, "request_length", floatFromFields, metrics.ParseErrorsTotal); ok {
-			metrics.RequestBytesTotal.WithLabelValues(notCounterValues...).Add(v)
+			metrics.RequestBytesTotal.WithLabelValues(labelValues...).Add(v)
 		}
 
 		if v, ok := observeMetrics(fields, "upstream_response_time", floatFromFieldsMulti, metrics.ParseErrorsTotal); ok {

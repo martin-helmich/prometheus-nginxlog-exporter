@@ -36,14 +36,14 @@ func (m *Collection) Init(cfg *config.NamespaceConfig) {
 		ConstLabels: cfg.NamespaceLabels,
 		Name:        "http_response_size_bytes",
 		Help:        "Total amount of transferred bytes",
-	}, labels)
+	}, counterLabels)
 
 	m.RequestBytesTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace:   cfg.NamespacePrefix,
 		ConstLabels: cfg.NamespaceLabels,
 		Name:        "http_request_size_bytes",
 		Help:        "Total amount of received bytes",
-	}, labels)
+	}, counterLabels)
 
 	m.UpstreamSeconds = prometheus.NewSummaryVec(prometheus.SummaryOpts{
 		Namespace:   cfg.NamespacePrefix,
@@ -51,7 +51,7 @@ func (m *Collection) Init(cfg *config.NamespaceConfig) {
 		Name:        "http_upstream_time_seconds",
 		Help:        "Time needed by upstream servers to handle requests",
 		Objectives:  map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
-	}, labels)
+	}, counterLabels)
 
 	m.UpstreamSecondsHist = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace:   cfg.NamespacePrefix,
