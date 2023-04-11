@@ -111,7 +111,7 @@ func (c *NamespaceConfig) ResolveGlobs() error {
 func (c *NamespaceConfig) Compile() error {
 	for i := range c.RelabelConfigs {
 		if err := c.RelabelConfigs[i].Compile(); err != nil {
-			return nil
+			return err
 		}
 	}
 	if c.NamespaceLabelName != "" {
