@@ -2,13 +2,12 @@ package config
 
 import (
 	"io"
-	"io/ioutil"
 
 	"github.com/hashicorp/hcl"
 )
 
 func loadConfigFromHCLStream(config *Config, file io.Reader) error {
-	buf, err := ioutil.ReadAll(file)
+	buf, err := io.ReadAll(file)
 	if err != nil {
 		return err
 	}

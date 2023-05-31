@@ -2,10 +2,11 @@ package config
 
 import (
 	"errors"
-	"fmt"
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/martin-helmich/prometheus-nginxlog-exporter/log"
 )
 
 // NamespaceConfig is a struct describing single metric namespaces
@@ -82,7 +83,7 @@ func (c *NamespaceConfig) ResolveDeprecations() {
 
 // ResolveGlobs finds globs in file sources and expand them to the actual
 // list of files
-func (c *NamespaceConfig) ResolveGlobs() error {
+func (c *NamespaceConfig) ResolveGlobs(logger *log.Logger) error {
 	if len(c.SourceData.Files) > 0 {
 		resolvedFiles := make([]string, 0)
 		for _, sf := range c.SourceData.Files {
@@ -91,10 +92,10 @@ func (c *NamespaceConfig) ResolveGlobs() error {
 				if err != nil {
 					return err
 				}
-				fmt.Printf("Resolved globs %v to %v\n", sf, matches)
+				logger.Infof("Resolved globs %v to %v", sf, matches)
 				resolvedFiles = append(resolvedFiles, matches...)
 			} else {
-				fmt.Printf("No globs for %v\n", sf)
+				logger.Warnf("No globs for %v", sf)
 				resolvedFiles = append(resolvedFiles, sf)
 			}
 		}
@@ -111,7 +112,7 @@ func (c *NamespaceConfig) ResolveGlobs() error {
 func (c *NamespaceConfig) Compile() error {
 	for i := range c.RelabelConfigs {
 		if err := c.RelabelConfigs[i].Compile(); err != nil {
-			return nil
+			return err
 		}
 	}
 	if c.NamespaceLabelName != "" {
