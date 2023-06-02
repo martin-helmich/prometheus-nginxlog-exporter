@@ -28,7 +28,10 @@ func openListener(s *syslog.Server, c string) error {
 		}
 
 	case "unix":
-		return fmt.Errorf("Not implemented")
+		err := s.ListenUnixgram(u.Host + u.Path)
+		if err != nil {
+			return err
+		}
 
 	default:
 		return fmt.Errorf("syslog server should be in format unix/tcp/udp://127.0.0.1:5533")
