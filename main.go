@@ -129,7 +129,7 @@ func main() {
 
 		fmt.Printf("starting listener for namespace %s\n", namespace.Name)
 		go func(ns *config.NamespaceConfig) {
-			processNamespace(ns, &(nsMetrics.Collection))
+			processNamespace(ns, &(nsMetrics.Collection), stopChan, &stopHandlers)
 		}(namespace)
 	}
 
@@ -190,7 +190,7 @@ func setupConsul(cfg *config.Config, stopChan <-chan bool, stopHandlers *sync.Wa
 	stopHandlers.Add(1)
 }
 
-func processNamespace(nsCfg *config.NamespaceConfig, metrics *metrics.Collection) error {
+func processNamespace(nsCfg *config.NamespaceConfig, metrics *metrics.Collection, stopChan <-chan bool, stopHandlers *sync.WaitGroup) error {
 	var followers []tail.Follower
 
 	parser := parser.NewParser(nsCfg)
@@ -212,10 +212,22 @@ func processNamespace(nsCfg *config.NamespaceConfig, metrics *metrics.Collection
 		slCfg := nsCfg.SourceData.Syslog
 
 		fmt.Printf("running Syslog server on address %s\n", slCfg.ListenAddress)
-		channel, server, err := syslog.Listen(slCfg.ListenAddress, slCfg.Format)
+		channel, server, closeServer, err := syslog.Listen(slCfg.ListenAddress, slCfg.Format)
 		if err != nil {
 			panic(err)
 		}
+
+		stopHandlers.Add(1)
+
+		go func() {
+			<-stopChan
+
+			if err := closeServer(); err != nil {
+				fmt.Printf("error while closing syslog server: %s\n", err.Error())
+			}
+
+			stopHandlers.Done()
+		}()
 
 		for _, f := range slCfg.Tags {
 			t, err := tail.NewSyslogFollower(f, server, channel)

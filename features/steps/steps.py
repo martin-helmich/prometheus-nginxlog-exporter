@@ -1,4 +1,6 @@
 import logging
+import logging.handlers
+import os
 import subprocess
 import time
 
@@ -80,6 +82,21 @@ def step_impl(context, port):
     time.sleep(.5)
 
 
+@when(u'the following HTTP request is logged to syslog on socket {socket}')
+@when(u'the following HTTP requests are logged to syslog on socket {socket}')
+def step_impl(context, socket: str):
+    log = logging.getLogger('test')
+    log_handler = logging.handlers.SysLogHandler(
+        address=socket, facility=logging.handlers.SysLogHandler.LOG_USER)
+    log.addHandler(log_handler)
+
+    lines = [l for l in context.text.split("\n") if l != ""]
+    for l in lines:
+        log.info(l)
+
+    time.sleep(.5)
+
+
 @then(u'the exporter should report value {val} for metric {metric}')
 @then(u'the exporter should on "{endpoint}" report value {val} for metric {metric}')
 def step_impl(context, val, metric, endpoint='/metrics'):
@@ -105,3 +122,20 @@ def step_impl(context):
     rc = context.process.poll()
     if rc is not None:
         raise AssertionError(f"The process has exited with return code {rc}")
+
+def current_process(context) -> subprocess.Popen:
+    return context.process
+
+@when("the exporter is stopped")
+def step_impl(context):
+    p = current_process(context)
+    p.terminate()
+    p.wait(10)
+
+    if p.poll() is None:
+        raise AssertionError("The process is still running")
+
+@then("the socket {socket} should not exist")
+def step_impl(context, socket):
+    if os.path.exists(socket):
+        raise AssertionError(f"The socket {socket} exists")
