@@ -212,7 +212,7 @@ func processNamespace(nsCfg *config.NamespaceConfig, metrics *metrics.Collection
 		slCfg := nsCfg.SourceData.Syslog
 
 		fmt.Printf("running Syslog server on address %s\n", slCfg.ListenAddress)
-		channel, server, err := syslog.Listen(slCfg.ListenAddress, slCfg.Format)
+		channel, server, closeServer, err := syslog.Listen(slCfg.ListenAddress, slCfg.Format)
 		if err != nil {
 			panic(err)
 		}
@@ -222,11 +222,8 @@ func processNamespace(nsCfg *config.NamespaceConfig, metrics *metrics.Collection
 		go func() {
 			<-stopChan
 
-			fmt.Printf("shutdown syslog server %s\n", slCfg.ListenAddress)
-			server.Kill()
-
-			if strings.HasPrefix(slCfg.ListenAddress, "unix://") {
-				os.Remove(strings.Replace(slCfg.ListenAddress, "unix://", "", 1))
+			if err := closeServer(); err != nil {
+				fmt.Printf("error while closing syslog server: %s\n", err.Error())
 			}
 
 			stopHandlers.Done()
