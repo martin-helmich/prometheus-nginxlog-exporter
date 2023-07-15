@@ -2,13 +2,12 @@ package config
 
 import (
 	"io"
-	"io/ioutil"
 
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 func loadConfigFromYAMLStream(config *Config, file io.Reader) error {
-	buf, err := ioutil.ReadAll(file)
+	buf, err := io.ReadAll(file)
 	if err != nil {
 		return err
 	}

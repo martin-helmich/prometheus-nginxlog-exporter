@@ -1,22 +1,27 @@
 package tail
 
 import (
+	"io"
 	"os"
 
+	"github.com/martin-helmich/prometheus-nginxlog-exporter/log"
 	"github.com/nxadm/tail"
 )
 
 type followerImpl struct {
+	logger *log.Logger
+
 	filename string
 	t        *tail.Tail
 	line     chan string
 }
 
-// NewFollower creates a new Follower instance for a given file (given by name)
-func NewFileFollower(filename string) (Follower, error) {
+// NewFileFollower creates a new Follower instance for a given file (given by name)
+func NewFileFollower(logger *log.Logger, filename string) (Follower, error) {
 	f := &followerImpl{
 		filename: filename,
 		line:     make(chan string),
+		logger:   logger,
 	}
 
 	if err := f.start(); err != nil {
@@ -35,7 +40,7 @@ func (f *followerImpl) start() error {
 			return err
 		}
 	} else {
-		seekInfo = &tail.SeekInfo{Offset: 0, Whence: os.SEEK_END}
+		seekInfo = &tail.SeekInfo{Offset: 0, Whence: io.SeekEnd}
 	}
 
 	t, err := tail.TailFile(f.filename, tail.Config{
@@ -43,6 +48,7 @@ func (f *followerImpl) start() error {
 		ReOpen:   true,
 		Poll:     true,
 		Location: seekInfo,
+		Logger:   f.logger,
 	})
 
 	if err != nil {

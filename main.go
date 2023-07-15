@@ -27,6 +27,7 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/martin-helmich/prometheus-nginxlog-exporter/log"
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/pkg/config"
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/pkg/discovery"
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/pkg/metrics"
@@ -36,7 +37,6 @@ import (
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/pkg/syslog"
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/pkg/tail"
 	"github.com/pkg/errors"
-
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/common/version"
@@ -69,6 +69,8 @@ func main() {
 	flag.StringVar(&opts.CPUProfile, "cpuprofile", "", "write cpu profile to `file`")
 	flag.StringVar(&opts.MemProfile, "memprofile", "", "write memory profile to `file`")
 	flag.StringVar(&opts.MetricsEndpoint, "metrics-endpoint", cfg.Listen.MetricsEndpoint, "URL path at which to serve metrics")
+	flag.StringVar(&opts.LogLevel, "log-level", "info", "level of logs. Allowed values: error, warning, info, debug")
+	flag.StringVar(&opts.LogFormat, "log-format", "console", "Define log format. Allowed values: console, json")
 	flag.BoolVar(&opts.VerifyConfig, "verify-config", false, "Enable this flag to check config file loads, then exit")
 	flag.BoolVar(&opts.Version, "version", false, "set to print version information")
 	flag.Parse()
@@ -76,6 +78,12 @@ func main() {
 	if opts.Version {
 		fmt.Println(version.Print("prometheus-nginxlog-exporter"))
 		os.Exit(0)
+	}
+
+	logger, err := log.New(opts.LogLevel, opts.LogFormat)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
 	}
 
 	opts.Filenames = flag.Args()
@@ -90,7 +98,7 @@ func main() {
 	go func() {
 		sig := <-sigChan
 
-		fmt.Printf("caught term %s. exiting\n", sig)
+		logger.Infof("caught term %s. exiting", sig)
 
 		close(stopChan)
 		stopHandlers.Wait()
@@ -106,19 +114,20 @@ func main() {
 	prof.SetupCPUProfiling(opts.CPUProfile, stopChan, &stopHandlers)
 	prof.SetupMemoryProfiling(opts.MemProfile, stopChan, &stopHandlers)
 
-	loadConfig(&opts, &cfg)
+	loadConfig(logger, &opts, &cfg)
 
-	fmt.Printf("using configuration %+v\n", cfg)
+	logger.Debugf("using configuration %+v", cfg)
 
 	if stabilityError := cfg.StabilityWarnings(); stabilityError != nil && !opts.EnableExperimentalFeatures {
-		fmt.Fprintf(os.Stderr, "Your configuration file contains an option that is explicitly labeled as experimental feature:\n\n  %s\n\n", stabilityError.Error())
-		fmt.Fprintln(os.Stderr, "Use the -enable-experimental flag or the enable_experimental option to enable these features. Use them at your own peril.")
+		logger.Error("Your configuration file contains an option that is explicitly labeled as experimental feature")
+		logger.Error(stabilityError.Error())
+		logger.Error("Use the -enable-experimental flag or the enable_experimental option to enable these features. Use them at your own peril.")
 
 		os.Exit(1)
 	}
 
 	if cfg.Consul.Enable {
-		setupConsul(&cfg, stopChan, &stopHandlers)
+		setupConsul(logger, &cfg, stopChan, &stopHandlers)
 	}
 
 	for i := range cfg.Namespaces {
@@ -127,16 +136,16 @@ func main() {
 		nsMetrics := metrics.NewForNamespace(namespace)
 		gatherers = append(gatherers, nsMetrics.Gatherer())
 
-		fmt.Printf("starting listener for namespace %s\n", namespace.Name)
+		logger.Infof("starting listener for namespace %s", namespace.Name)
 		go func(ns *config.NamespaceConfig) {
-			processNamespace(ns, &(nsMetrics.Collection), stopChan, &stopHandlers)
+			processNamespace(logger, ns, &(nsMetrics.Collection), stopChan, &stopHandlers)
 		}(namespace)
 	}
 
 	listenAddr := fmt.Sprintf("%s:%d", cfg.Listen.Address, cfg.Listen.Port)
 	endpoint := cfg.Listen.MetricsEndpointOrDefault()
 
-	fmt.Printf("running HTTP server on address %s, serving metrics at %s\n", listenAddr, endpoint)
+	logger.Infof("running HTTP server on address %s, serving metrics at %s", listenAddr, endpoint)
 
 	nsHandler := promhttp.InstrumentMetricHandler(
 		prometheus.DefaultRegisterer,
@@ -145,43 +154,42 @@ func main() {
 
 	http.Handle(endpoint, nsHandler)
 
-	if err := http.ListenAndServe(listenAddr, nil); err != nil {
-		fmt.Printf("error while starting HTTP server: %s", err.Error())
-	}
+	logger.Fatal(http.ListenAndServe(listenAddr, nil))
 }
 
-func loadConfig(opts *config.StartupFlags, cfg *config.Config) {
+func loadConfig(logger *log.Logger, opts *config.StartupFlags, cfg *config.Config) {
 	if opts.ConfigFile != "" {
-		fmt.Printf("loading configuration file %s\n", opts.ConfigFile)
-		if err := config.LoadConfigFromFile(cfg, opts.ConfigFile); err != nil {
-			panic(err)
+		logger.Infof("loading configuration file %s", opts.ConfigFile)
+		if err := config.LoadConfigFromFile(logger, cfg, opts.ConfigFile); err != nil {
+			logger.Fatal(err)
 		}
 	} else if err := config.LoadConfigFromFlags(cfg, opts); err != nil {
-		panic(err)
+		logger.Fatal(err)
 	}
+
 	if opts.VerifyConfig {
 		fmt.Printf("Configuration is valid")
 		os.Exit(0)
 	}
 }
 
-func setupConsul(cfg *config.Config, stopChan <-chan bool, stopHandlers *sync.WaitGroup) {
+func setupConsul(logger *log.Logger, cfg *config.Config, stopChan <-chan bool, stopHandlers *sync.WaitGroup) {
 	registrator, err := discovery.NewConsulRegistrator(cfg)
 	if err != nil {
-		panic(err)
+		logger.Fatal(err)
 	}
 
-	fmt.Printf("registering service in Consul\n")
-	if err := registrator.RegisterConsul(); err != nil {
-		panic(err)
+	logger.Info("registering service in Consul")
+	if err = registrator.RegisterConsul(); err != nil {
+		logger.Fatal(err)
 	}
 
 	go func() {
 		<-stopChan
-		fmt.Printf("unregistering service in Consul\n")
+		logger.Info("unregistering service in Consul")
 
 		if err := registrator.UnregisterConsul(); err != nil {
-			fmt.Printf("error while unregistering from consul: %s\n", err.Error())
+			logger.Errorf("error while unregistering from consul: %s", err.Error())
 		}
 
 		stopHandlers.Done()
@@ -190,19 +198,19 @@ func setupConsul(cfg *config.Config, stopChan <-chan bool, stopHandlers *sync.Wa
 	stopHandlers.Add(1)
 }
 
-func processNamespace(nsCfg *config.NamespaceConfig, metrics *metrics.Collection, stopChan <-chan bool, stopHandlers *sync.WaitGroup) error {
+func processNamespace(logger *log.Logger, nsCfg *config.NamespaceConfig, metrics *metrics.Collection, stopChan <-chan bool, stopHandlers *sync.WaitGroup) error {
 	var followers []tail.Follower
 
-	parser := parser.NewParser(nsCfg)
+	logParser := parser.NewParser(nsCfg)
 
 	for _, f := range nsCfg.SourceData.Files {
-		t, err := tail.NewFileFollower(f)
+		t, err := tail.NewFileFollower(logger, f)
 		if err != nil {
-			panic(err)
+			logger.Fatal(err)
 		}
 
 		t.OnError(func(err error) {
-			panic(err)
+			logger.Fatal(err)
 		})
 
 		followers = append(followers, t)
@@ -211,7 +219,7 @@ func processNamespace(nsCfg *config.NamespaceConfig, metrics *metrics.Collection
 	if nsCfg.SourceData.Syslog != nil {
 		slCfg := nsCfg.SourceData.Syslog
 
-		fmt.Printf("running Syslog server on address %s\n", slCfg.ListenAddress)
+		logger.Infof("running Syslog server on address %s", slCfg.ListenAddress)
 		channel, server, closeServer, err := syslog.Listen(slCfg.ListenAddress, slCfg.Format)
 		if err != nil {
 			panic(err)
@@ -232,11 +240,11 @@ func processNamespace(nsCfg *config.NamespaceConfig, metrics *metrics.Collection
 		for _, f := range slCfg.Tags {
 			t, err := tail.NewSyslogFollower(f, server, channel)
 			if err != nil {
-				panic(err)
+				logger.Fatal(err)
 			}
 
 			t.OnError(func(err error) {
-				panic(err)
+				logger.Fatal(err)
 			})
 
 			followers = append(followers, t)
@@ -257,7 +265,7 @@ func processNamespace(nsCfg *config.NamespaceConfig, metrics *metrics.Collection
 
 	for _, follower := range followers {
 		go func(f tail.Follower) {
-			if err := processSource(nsCfg, f, parser, metrics, hasCounterOnlyLabels); err != nil {
+			if err := processSource(logger, nsCfg, f, logParser, metrics, hasCounterOnlyLabels); err != nil {
 				errs <- err
 			}
 		}(follower)
@@ -266,7 +274,7 @@ func processNamespace(nsCfg *config.NamespaceConfig, metrics *metrics.Collection
 	return <-errs
 }
 
-func processSource(nsCfg *config.NamespaceConfig, t tail.Follower, parser parser.Parser, metrics *metrics.Collection, hasCounterOnlyLabels bool) error {
+func processSource(logger *log.Logger, nsCfg *config.NamespaceConfig, t tail.Follower, parser parser.Parser, metrics *metrics.Collection, hasCounterOnlyLabels bool) error {
 	relabelings := relabeling.NewRelabelings(nsCfg.RelabelConfigs)
 	relabelings = append(relabelings, relabeling.DefaultRelabelings...)
 	relabelings = relabeling.UniqueRelabelings(relabelings)
@@ -291,7 +299,7 @@ func processSource(nsCfg *config.NamespaceConfig, t tail.Follower, parser parser
 
 		fields, err := parser.ParseString(line)
 		if err != nil {
-			fmt.Printf("error while parsing line '%s': %s\n", line, err)
+			logger.Errorf("error while parsing line '%s': %s", line, err)
 			metrics.ParseErrorsTotal.Inc()
 			continue
 		}
@@ -314,25 +322,25 @@ func processSource(nsCfg *config.NamespaceConfig, t tail.Follower, parser parser
 
 		metrics.CountTotal.WithLabelValues(labelValues...).Inc()
 
-		if v, ok := observeMetrics(fields, "body_bytes_sent", floatFromFields, metrics.ParseErrorsTotal); ok {
+		if v, ok := observeMetrics(logger, fields, "body_bytes_sent", floatFromFields, metrics.ParseErrorsTotal); ok {
 			metrics.ResponseBytesTotal.WithLabelValues(notCounterValues...).Add(v)
 		}
 
-		if v, ok := observeMetrics(fields, "request_length", floatFromFields, metrics.ParseErrorsTotal); ok {
+		if v, ok := observeMetrics(logger, fields, "request_length", floatFromFields, metrics.ParseErrorsTotal); ok {
 			metrics.RequestBytesTotal.WithLabelValues(notCounterValues...).Add(v)
 		}
 
-		if v, ok := observeMetrics(fields, "upstream_response_time", floatFromFieldsMulti, metrics.ParseErrorsTotal); ok {
+		if v, ok := observeMetrics(logger, fields, "upstream_response_time", floatFromFieldsMulti, metrics.ParseErrorsTotal); ok {
 			metrics.UpstreamSeconds.WithLabelValues(notCounterValues...).Observe(v)
 			metrics.UpstreamSecondsHist.WithLabelValues(notCounterValues...).Observe(v)
 		}
 
-		if v, ok := observeMetrics(fields, "upstream_connect_time", floatFromFieldsMulti, metrics.ParseErrorsTotal); ok {
+		if v, ok := observeMetrics(logger, fields, "upstream_connect_time", floatFromFieldsMulti, metrics.ParseErrorsTotal); ok {
 			metrics.UpstreamConnectSeconds.WithLabelValues(notCounterValues...).Observe(v)
 			metrics.UpstreamConnectSecondsHist.WithLabelValues(notCounterValues...).Observe(v)
 		}
 
-		if v, ok := observeMetrics(fields, "request_time", floatFromFields, metrics.ParseErrorsTotal); ok {
+		if v, ok := observeMetrics(logger, fields, "request_time", floatFromFields, metrics.ParseErrorsTotal); ok {
 			metrics.ResponseSeconds.WithLabelValues(notCounterValues...).Observe(v)
 			metrics.ResponseSecondsHist.WithLabelValues(notCounterValues...).Observe(v)
 		}
@@ -341,11 +349,11 @@ func processSource(nsCfg *config.NamespaceConfig, t tail.Follower, parser parser
 	return nil
 }
 
-func observeMetrics(fields map[string]string, name string, extractor func(map[string]string, string) (float64, bool, error), parseErrors prometheus.Counter) (float64, bool) {
+func observeMetrics(logger *log.Logger, fields map[string]string, name string, extractor func(map[string]string, string) (float64, bool, error), parseErrors prometheus.Counter) (float64, bool) {
 	if observation, ok, err := extractor(fields, name); ok {
 		return observation, true
 	} else if err != nil {
-		fmt.Printf("error while parsing $%s: %v\n", name, err)
+		logger.Errorf("error while parsing $%s: %v", name, err)
 		parseErrors.Inc()
 	}
 
