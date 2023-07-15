@@ -138,7 +138,7 @@ func main() {
 
 		logger.Infof("starting listener for namespace %s", namespace.Name)
 		go func(ns *config.NamespaceConfig) {
-			processNamespace(logger, ns, &(nsMetrics.Collection))
+			processNamespace(logger, ns, &(nsMetrics.Collection), stopChan, &stopHandlers)
 		}(namespace)
 	}
 
@@ -198,7 +198,7 @@ func setupConsul(logger *log.Logger, cfg *config.Config, stopChan <-chan bool, s
 	stopHandlers.Add(1)
 }
 
-func processNamespace(logger *log.Logger, nsCfg *config.NamespaceConfig, metrics *metrics.Collection) error {
+func processNamespace(logger *log.Logger, nsCfg *config.NamespaceConfig, metrics *metrics.Collection, stopChan <-chan bool, stopHandlers *sync.WaitGroup) error {
 	var followers []tail.Follower
 
 	logParser := parser.NewParser(nsCfg)
@@ -220,10 +220,22 @@ func processNamespace(logger *log.Logger, nsCfg *config.NamespaceConfig, metrics
 		slCfg := nsCfg.SourceData.Syslog
 
 		logger.Infof("running Syslog server on address %s", slCfg.ListenAddress)
-		channel, server, err := syslog.Listen(slCfg.ListenAddress, slCfg.Format)
+		channel, server, closeServer, err := syslog.Listen(slCfg.ListenAddress, slCfg.Format)
 		if err != nil {
 			panic(err)
 		}
+
+		stopHandlers.Add(1)
+
+		go func() {
+			<-stopChan
+
+			if err := closeServer(); err != nil {
+				fmt.Printf("error while closing syslog server: %s\n", err.Error())
+			}
+
+			stopHandlers.Done()
+		}()
 
 		for _, f := range slCfg.Tags {
 			t, err := tail.NewSyslogFollower(f, server, channel)
