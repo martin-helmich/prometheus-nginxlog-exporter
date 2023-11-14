@@ -62,7 +62,7 @@ Docker images for this exporter are available at the quay.io and pkg.github.com
 registries:
 
   - `quay.io/martinhelmich/prometheus-nginxlog-exporter:v1`
-  - `docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:v1`
+  - `ghcr.io/martin-helmich/prometheus-nginxlog-exporter/exporter:v1`
 
 Have a look at the https://github.com/martin-helmich/prometheus-nginxlog-exporter/releases[releases page]
 to see the available versions and how to pull their images. In general, I would
