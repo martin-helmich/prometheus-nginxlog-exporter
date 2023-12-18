@@ -23,7 +23,7 @@ jobs:
         run: CGO_ENABLED=0 go build -a -installsuffix cgo -o prometheus-nginxlog-exporter .
 
       - name: Upload build artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: build
           path: prometheus-nginxlog-exporter
