@@ -3,7 +3,7 @@ module github.com/martin-helmich/prometheus-nginxlog-exporter
 go 1.20
 
 require (
-	github.com/hashicorp/consul/api v1.26.1
+	github.com/hashicorp/consul/api v1.27.0
 	github.com/hashicorp/hcl v1.0.0
 	github.com/nxadm/tail v1.4.8
 	github.com/pkg/errors v0.9.1
@@ -44,7 +44,7 @@ require (
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	golang.org/x/exp v0.0.0-20230817173708-d852ddb80c63 // indirect
-	golang.org/x/sys v0.13.0 // indirect
+	golang.org/x/sys v0.15.0 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 )
