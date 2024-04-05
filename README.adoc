@@ -162,7 +162,7 @@ spec:
       image: nginx
       # ...
     - name: exporter
-      image: docker.pkg.github.com/martin-helmich/prometheus-nginxlog-exporter/exporter:v1
+      image: quay.io/martinhelmich/prometheus-nginxlog-exporter:v1
       args: ["-config-file", "/etc/prometheus-nginxlog-exporter/config.hcl"]
       volumeMounts:
       - name: exporter-config
