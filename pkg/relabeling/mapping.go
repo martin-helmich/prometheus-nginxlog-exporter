@@ -38,7 +38,9 @@ func (r *Relabeling) Map(sourceValue string) (string, error) {
 				break
 			}
 		}
-		sourceValue = replacement
+		if replacement != "" {
+			sourceValue = replacement
+		}
 	}
 
 	return sourceValue, nil
