@@ -38,8 +38,8 @@ import (
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/pkg/tail"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors/version"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/prometheus/common/version"
 )
 
 const maxStaticLabels = 128
@@ -74,11 +74,6 @@ func main() {
 	flag.BoolVar(&opts.VerifyConfig, "verify-config", false, "Enable this flag to check config file loads, then exit")
 	flag.BoolVar(&opts.Version, "version", false, "set to print version information")
 	flag.Parse()
-
-	if opts.Version {
-		fmt.Println(version.Print("prometheus-nginxlog-exporter"))
-		os.Exit(0)
-	}
 
 	logger, err := log.New(opts.LogLevel, opts.LogFormat)
 	if err != nil {
@@ -249,6 +244,15 @@ func processNamespace(logger *log.Logger, nsCfg *config.NamespaceConfig, metrics
 
 			followers = append(followers, t)
 		}
+	}
+
+	if nsCfg.SourceData.Docker != nil {
+		t, err := tail.NewDockerFollower(nsCfg.SourceData.Docker.ContainerName)
+		if err != nil {
+			panic(err)
+		}
+
+		followers = append(followers, t)
 	}
 
 	// determine once if there are any relabeling configurations for only the response counter

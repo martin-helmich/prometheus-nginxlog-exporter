@@ -38,9 +38,14 @@ type NamespaceConfig struct {
 type SourceData struct {
 	Files  FileSource    `hcl:"files" yaml:"files"`
 	Syslog *SyslogSource `hcl:"syslog" yaml:"syslog"`
+	Docker *DockerSource `hcl:"docker" yaml:"docker"`
 }
 
 type FileSource []string
+
+type DockerSource struct {
+	ContainerName string `hcl:"container" yaml:"container"`
+}
 
 type SyslogSource struct {
 	ListenAddress string   `hcl:"listen_address" yaml:"listen_address"`
@@ -51,6 +56,9 @@ type SyslogSource struct {
 // StabilityWarnings tests if the NamespaceConfig uses any configuration settings
 // that are not yet declared "stable"
 func (c *NamespaceConfig) StabilityWarnings() error {
+	//if c.SourceData.Docker != nil {
+	//	return errors.New("you are using the 'docker' log source")
+	//}
 	return nil
 }
 

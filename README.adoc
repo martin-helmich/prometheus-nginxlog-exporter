@@ -16,6 +16,9 @@ image:https://img.shields.io/badge/donate-PayPal-yellow[link="https://www.paypal
 
 Helper tool that continuously reads an NGINX log file (or any kind of similar log file) and exports metrics to https://prometheus.io/[Prometheus].
 
+*Added the ability to export logs from Docker (enhanced pull request https://github.com/martin-helmich/prometheus-nginxlog-exporter/pull/125[#125] from the original repository).*
+
+
 [discrete]
 == Contents
 
@@ -358,6 +361,48 @@ namespaces:
 
 Advanced features
 -----------------
+
+### Reading from Docker logs
+If Nginx is running in a docker container and is configured to log to `/dev/stdout` and `/dev/stderr` (this is the
+default configuration of the official `nginx` image), then you can export logs using Docker's default logging driver.
+To do this use a source configuration as follows:
+[source,hcl]
+----
+namespace "test" {
+  source {
+    docker {
+      container = "nginx_container_name"
+    }
+
+    // ...
+  }
+}
+----
+[source,yaml]
+----
+#...
+
+namespaces:
+  - name: nginx
+    format: "format"
+    source:
+      docker:
+        container: nginx_container_name
+
+#...
+----
+The host's docker socket needs to be mounted to the container. For example, if using the docker run command as follows:
+[source]
+----
+$ docker run \
+    --name nginx-exporter \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    -v /path/to/config.hcl:/etc/prometheus-nginxlog-exporter.hcl \
+    -p 4040:4040 \
+    quay.io/martinhelmich/prometheus-nginxlog-exporter \
+    -config-file /etc/prometheus-nginxlog-exporter.hcl \
+----
+
 ### Namespace as labels
 
 For historic reasons, this exporter exports separate metrics for different
