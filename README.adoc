@@ -457,7 +457,7 @@ namespace "test" {
   }
 }
 ----
-<1> The `listen_address` might be either a TCP or UDP address. UNIX sockets are not supported (yet -- pull requests are welcome)
+<1> The `listen_address` might be either a TCP or UDP address or a UNIX socket (using `unix://`).
 <2> The `format` may be one of `rfc3164`, `rfc5424`, `rfc6587` or `auto`. If omitted, it will default to `auto`
 <3> The `tags` must be specified.
 
