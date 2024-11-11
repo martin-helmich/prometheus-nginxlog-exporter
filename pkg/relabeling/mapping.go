@@ -1,6 +1,7 @@
 package relabeling
 
 import (
+	"path/filepath"
 	"strings"
 )
 
@@ -23,8 +24,20 @@ func (r *Relabeling) Map(sourceValue string) (string, error) {
 	}
 
 	if r.WhitelistExists {
-		if _, ok := r.WhitelistMap[sourceValue]; ok {
-			return sourceValue, nil
+		for pattern := range r.WhitelistMap {
+			if strings.Contains(pattern, "*") {
+				matched, err := filepath.Match(pattern, sourceValue)
+				if err != nil {
+					return "other", nil // handle invalid pattern error if it occurs
+				}
+				if matched {
+					return sourceValue, nil
+				}
+			} else {
+				if pattern == sourceValue {
+					return sourceValue, nil
+				}
+			}
 		}
 
 		return "other", nil
