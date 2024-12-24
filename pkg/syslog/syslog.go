@@ -80,7 +80,11 @@ func Listen(conn string, formatSpec string) (syslog.LogPartsChannel, *syslog.Ser
 			return fmt.Errorf("failed to kill syslog server: %w", err)
 		}
 
-		return closeListener()
+		if closeListener != nil {
+			return closeListener()
+		}
+
+		return nil
 	}
 
 	return channel, server, stopFn, nil
