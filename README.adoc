@@ -489,7 +489,7 @@ discussion around the reasoning.
 Dynamic relabeling also allows you to aggregate your metrics by request path (which replaces
 the experimental feature originally introduced in #23). The following example splits the content of
 the `request` variable at every space (using `split`) and return the second element (index 1) of the
-resulting list which is the base for the regex):
+resulting list which is the base for the regex. If nothing was found by regexp, the default value will be returned. If the source variable is empty, you can specify the default_for_empty_from parameter.:
 
 [source,hcl]
 ----
@@ -506,6 +506,8 @@ namespace "app1" {
 
     match "^/users/[0-9]+" {
       replacement = "/users/:id"
+      default = "/users/unknown"
+      default_for_empty_from = "error"
     }
 
     match "^/profile" {

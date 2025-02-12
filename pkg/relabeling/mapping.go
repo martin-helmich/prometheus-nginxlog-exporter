@@ -30,13 +30,23 @@ func (r *Relabeling) Map(sourceValue string) (string, error) {
 		return "other", nil
 	}
 
+
+
 	if len(r.Matches) > 0 {
 		replacement := ""
 		for i := range r.Matches {
+
 			if r.Matches[i].CompiledRegexp.MatchString(sourceValue) {
 				replacement = r.Matches[i].CompiledRegexp.ReplaceAllString(sourceValue, r.Matches[i].Replacement)
 				break
+			} else if r.Matches[i].DefaultValue != "" {
+				replacement = r.Matches[i].DefaultValue
 			}
+
+			if len(sourceValue) == 0 && r.Matches[i].DefaultIfSourceEmpty != "" {
+				replacement = r.Matches[i].DefaultIfSourceEmpty
+			}
+
 		}
 		sourceValue = replacement
 	}
