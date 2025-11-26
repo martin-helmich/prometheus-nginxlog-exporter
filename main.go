@@ -38,6 +38,7 @@ import (
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/pkg/tail"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/common/version"
 )
@@ -55,7 +56,7 @@ func main() {
 	}
 
 	versionMetrics := prometheus.NewRegistry()
-	versionMetrics.MustRegister(version.NewCollector("prometheus_nginxlog_exporter"))
+	versionMetrics.MustRegister(collectors.NewBuildInfoCollector())
 
 	gatherers := prometheus.Gatherers{versionMetrics}
 
