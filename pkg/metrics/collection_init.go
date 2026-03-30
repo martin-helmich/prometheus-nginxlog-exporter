@@ -13,9 +13,7 @@ func (m *Collection) Init(cfg *config.NamespaceConfig) {
 	labels := cfg.OrderedLabelNames
 	counterLabels := labels
 
-	relabelings := relabeling.NewRelabelings(cfg.RelabelConfigs)
-	relabelings = append(relabelings, relabeling.DefaultRelabelings...)
-	relabelings = relabeling.UniqueRelabelings(relabelings)
+	relabelings := relabeling.BuildRelabelings(cfg.RelabelConfigs)
 
 	for _, r := range relabelings {
 		if !r.OnlyCounter {

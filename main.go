@@ -167,6 +167,12 @@ func loadConfig(logger *log.Logger, opts *config.StartupFlags, cfg *config.Confi
 		logger.Fatal(err)
 	}
 
+	for i := range cfg.Namespaces {
+		for _, warningMessage := range cfg.Namespaces[i].CardinalityWarnings() {
+			logger.Warn(warningMessage)
+		}
+	}
+
 	if opts.VerifyConfig {
 		fmt.Printf("Configuration is valid")
 		os.Exit(0)
@@ -251,9 +257,11 @@ func processNamespace(logger *log.Logger, nsCfg *config.NamespaceConfig, metrics
 		}
 	}
 
+	relabelings := relabeling.BuildRelabelings(nsCfg.RelabelConfigs)
+
 	// determine once if there are any relabeling configurations for only the response counter
 	hasCounterOnlyLabels := false
-	for _, r := range nsCfg.RelabelConfigs {
+	for _, r := range relabelings {
 		if r.OnlyCounter {
 			hasCounterOnlyLabels = true
 			break
@@ -265,7 +273,7 @@ func processNamespace(logger *log.Logger, nsCfg *config.NamespaceConfig, metrics
 
 	for _, follower := range followers {
 		go func(f tail.Follower) {
-			if err := processSource(logger, nsCfg, f, logParser, metrics, hasCounterOnlyLabels); err != nil {
+			if err := processSource(logger, nsCfg, f, logParser, metrics, relabelings, hasCounterOnlyLabels); err != nil {
 				errs <- err
 			}
 		}(follower)
@@ -274,11 +282,7 @@ func processNamespace(logger *log.Logger, nsCfg *config.NamespaceConfig, metrics
 	return <-errs
 }
 
-func processSource(logger *log.Logger, nsCfg *config.NamespaceConfig, t tail.Follower, parser parser.Parser, metrics *metrics.Collection, hasCounterOnlyLabels bool) error {
-	relabelings := relabeling.NewRelabelings(nsCfg.RelabelConfigs)
-	relabelings = append(relabelings, relabeling.DefaultRelabelings...)
-	relabelings = relabeling.UniqueRelabelings(relabelings)
-
+func processSource(logger *log.Logger, nsCfg *config.NamespaceConfig, t tail.Follower, parser parser.Parser, metrics *metrics.Collection, relabelings []*relabeling.Relabeling, hasCounterOnlyLabels bool) error {
 	staticLabelValues := nsCfg.OrderedLabelValues
 
 	totalLabelCount := len(staticLabelValues) + len(relabelings)
@@ -302,6 +306,10 @@ func processSource(logger *log.Logger, nsCfg *config.NamespaceConfig, t tail.Fol
 			logger.Errorf("error while parsing line '%s': %s", line, err)
 			metrics.ParseErrorsTotal.Inc()
 			continue
+		}
+
+		for i := relabelLabelOffset; i < totalLabelCount; i++ {
+			labelValues[i] = ""
 		}
 
 		for i := range relabelings {

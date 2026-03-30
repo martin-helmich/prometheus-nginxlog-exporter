@@ -41,5 +41,33 @@ func (r *Relabeling) Map(sourceValue string) (string, error) {
 		sourceValue = replacement
 	}
 
-	return sourceValue, nil
+	if r.MaxCardinality <= 0 || r.seenValues == nil {
+		return sourceValue, nil
+	}
+
+	r.seenValuesMu.RLock()
+	_, knownValue := r.seenValues[sourceValue]
+	r.seenValuesMu.RUnlock()
+
+	if knownValue {
+		return sourceValue, nil
+	}
+
+	r.seenValuesMu.Lock()
+	defer r.seenValuesMu.Unlock()
+
+	if _, knownValue := r.seenValues[sourceValue]; knownValue {
+		return sourceValue, nil
+	}
+
+	if len(r.seenValues) < r.MaxCardinality {
+		r.seenValues[sourceValue] = struct{}{}
+		return sourceValue, nil
+	}
+
+	if r.OverflowValue != "" {
+		return r.OverflowValue, nil
+	}
+
+	return "other", nil
 }

@@ -1,11 +1,18 @@
 package relabeling
 
-import "github.com/martin-helmich/prometheus-nginxlog-exporter/pkg/config"
+import (
+	"sync"
+
+	"github.com/martin-helmich/prometheus-nginxlog-exporter/pkg/config"
+)
 
 // Relabeling contains a relabeling configuration and is responsible for
 // executing the rules specified in the original configuration
 type Relabeling struct {
 	config.RelabelConfig
+
+	seenValues   map[string]struct{}
+	seenValuesMu sync.RWMutex
 }
 
 // NewRelabelings creates a new set of relabelling runners from a list of
@@ -20,9 +27,25 @@ func NewRelabelings(cfgs []config.RelabelConfig) []*Relabeling {
 	return r
 }
 
+// BuildRelabelings creates the effective relabeling list, including defaults
+// and duplicate target-label filtering.
+func BuildRelabelings(cfgs []config.RelabelConfig) []*Relabeling {
+	relabelings := NewRelabelings(cfgs)
+	relabelings = append(relabelings, DefaultRelabelings...)
+	return UniqueRelabelings(relabelings)
+}
+
 // NewRelabeling creates a single new relabelling runner
 func NewRelabeling(cfg *config.RelabelConfig) *Relabeling {
-	return &Relabeling{*cfg}
+	relabeling := &Relabeling{
+		RelabelConfig: *cfg,
+	}
+
+	if cfg.MaxCardinality > 0 {
+		relabeling.seenValues = make(map[string]struct{}, cfg.MaxCardinality)
+	}
+
+	return relabeling
 }
 
 // UniqueRelabelings creates a unique relabelings, the duplicated one at the end will discard.

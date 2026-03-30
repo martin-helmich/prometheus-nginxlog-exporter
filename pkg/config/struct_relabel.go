@@ -8,13 +8,15 @@ import (
 // RelabelConfig is a struct describing a single re-labeling configuration for taking
 // over label values from an access log line into a Prometheus metric
 type RelabelConfig struct {
-	TargetLabel string              `hcl:",key" yaml:"target_label"`
-	SourceValue string              `hcl:"from" yaml:"from"`
-	Whitelist   []string            `hcl:"whitelist"`
-	Matches     []RelabelValueMatch `hcl:"match"`
-	Split       int                 `hcl:"split"`
-	Separator   string              `hcl:"separator"`
-	OnlyCounter bool                `hcl:"only_counter" yaml:"only_counter"`
+	TargetLabel    string              `hcl:",key" yaml:"target_label"`
+	SourceValue    string              `hcl:"from" yaml:"from"`
+	Whitelist      []string            `hcl:"whitelist"`
+	Matches        []RelabelValueMatch `hcl:"match"`
+	Split          int                 `hcl:"split"`
+	Separator      string              `hcl:"separator"`
+	OnlyCounter    bool                `hcl:"only_counter" yaml:"only_counter"`
+	MaxCardinality int                 `hcl:"max_cardinality" yaml:"max_cardinality"`
+	OverflowValue  string              `hcl:"overflow_value" yaml:"overflow_value"`
 
 	WhitelistExists bool
 	WhitelistMap    map[string]interface{}

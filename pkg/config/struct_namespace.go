@@ -2,6 +2,7 @@ package config
 
 import (
 	"errors"
+	"fmt"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -52,6 +53,27 @@ type SyslogSource struct {
 // that are not yet declared "stable"
 func (c *NamespaceConfig) StabilityWarnings() error {
 	return nil
+}
+
+// CardinalityWarnings returns warning messages for relabelings that may create
+// unbounded metric cardinality.
+func (c *NamespaceConfig) CardinalityWarnings() []string {
+	warnings := make([]string, 0)
+
+	for i := range c.RelabelConfigs {
+		relabelConfig := c.RelabelConfigs[i]
+		if len(relabelConfig.Whitelist) > 0 || len(relabelConfig.Matches) > 0 || relabelConfig.MaxCardinality > 0 {
+			continue
+		}
+
+		warnings = append(warnings, fmt.Sprintf(
+			"namespace %q relabel %q may produce unbounded metric cardinality and unbounded memory growth; consider whitelist, match, only_counter, or max_cardinality",
+			c.Name,
+			relabelConfig.TargetLabel,
+		))
+	}
+
+	return warnings
 }
 
 // DeprecationWarnings tests if the NamespaceConfig uses any deprecated
