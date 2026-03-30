@@ -304,6 +304,10 @@ func processSource(logger *log.Logger, nsCfg *config.NamespaceConfig, t tail.Fol
 			continue
 		}
 
+		for i := relabelLabelOffset; i < totalLabelCount; i++ {
+			labelValues[i] = ""
+		}
+
 		for i := range relabelings {
 			if str, ok := fields[relabelings[i].SourceValue]; ok {
 				mapped, err := relabelings[i].Map(str)
