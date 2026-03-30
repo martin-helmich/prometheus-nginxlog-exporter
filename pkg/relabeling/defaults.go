@@ -6,7 +6,7 @@ import "github.com/martin-helmich/prometheus-nginxlog-exporter/pkg/config"
 // and do not need to be explicitly configured
 var DefaultRelabelings = []*Relabeling{
 	{
-		config.RelabelConfig{
+		RelabelConfig: config.RelabelConfig{
 			TargetLabel: "method",
 			SourceValue: "request",
 			Split:       1,
@@ -26,7 +26,7 @@ var DefaultRelabelings = []*Relabeling{
 		},
 	},
 	{
-		config.RelabelConfig{
+		RelabelConfig: config.RelabelConfig{
 			TargetLabel: "status",
 			SourceValue: "status",
 		},

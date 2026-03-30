@@ -7,6 +7,7 @@ import (
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/log"
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/pkg/config"
 	"github.com/martin-helmich/prometheus-nginxlog-exporter/pkg/metrics"
+	"github.com/martin-helmich/prometheus-nginxlog-exporter/pkg/relabeling"
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/require"
@@ -95,6 +96,7 @@ func TestProcessSourceDoesNotReuseRelabelValuesFromPreviousLine(t *testing.T) {
 
 	collection := &metrics.Collection{}
 	collection.Init(nsCfg)
+	relabelings := relabeling.BuildRelabelings(nsCfg.RelabelConfigs)
 
 	parser := &stubParser{
 		fieldsByLine: map[string]map[string]string{
@@ -110,7 +112,7 @@ func TestProcessSourceDoesNotReuseRelabelValuesFromPreviousLine(t *testing.T) {
 		},
 	}
 
-	err = processSource(logger, nsCfg, newStubFollower("line-1", "line-2"), parser, collection, false)
+	err = processSource(logger, nsCfg, newStubFollower("line-1", "line-2"), parser, collection, relabelings, false)
 	require.NoError(t, err)
 
 	samples := collectCounterSamples(t, collection.CountTotal)

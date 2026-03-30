@@ -486,6 +486,12 @@ namespace "app-1" {
 All other values will be subsumed under the `"other"` label value. See #16 for a more detailed
 discussion around the reasoning.
 
+[CAUTION]
+====
+Dynamic labels derived from request-specific data can create unbounded metric cardinality, which in turn can cause sustained memory growth in the exporter process.
+Prefer `whitelist`, `match`, or `max_cardinality` to keep the set of emitted label values bounded, and consider `only_counter = true` for request-derived labels that should not be added to summaries or histograms.
+====
+
 Dynamic relabeling also allows you to aggregate your metrics by request path (which replaces
 the experimental feature originally introduced in #23). The following example splits the content of
 the `request` variable at every space (using `split`) and return the second element (index 1) of the
@@ -501,8 +507,11 @@ namespace "app1" {
     split = 2
     separator = " " // <1>
 
+    max_cardinality = 100
+    overflow_value = "other"
+
     // if enabled, only include label in response count metric (default is false)
-    only_counter = false
+    only_counter = true
 
     match "^/users/[0-9]+" {
       replacement = "/users/:id"
@@ -515,6 +524,9 @@ namespace "app1" {
 }
 ----
 <1> The `separator` property is optional; if omitted, the space character (`" "`) will be assumed as separator.
+
+When `max_cardinality` is set, the exporter keeps track of the distinct emitted values for that relabel.
+Once the configured limit is reached, newly observed values are mapped to `overflow_value`, which defaults to `"other"` if omitted.
 
 If a match is found, the `replacement` replaces each occurrence of the corresponding match in the original value. Otherwise the processing continues to check the following match statements.
 
@@ -529,6 +541,9 @@ namespaces:
     from: request
     split: 2
     separator: ' '
+    max_cardinality: 100
+    overflow_value: other
+    only_counter: true
     matches:
     - regexp: "^/users/[0-9]+"
       replacement: "/users/:id"
