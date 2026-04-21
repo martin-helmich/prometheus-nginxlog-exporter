@@ -1,6 +1,6 @@
 module github.com/martin-helmich/prometheus-nginxlog-exporter
 
-go 1.20
+go 1.21
 
 require (
 	github.com/hashicorp/consul/api v1.26.1

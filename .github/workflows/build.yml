@@ -17,7 +17,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: 1.18.x
+          go-version: 1.21.11
 
       - name: Compile
         run: CGO_ENABLED=0 go build -a -installsuffix cgo -o prometheus-nginxlog-exporter .
@@ -38,7 +38,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: 1.18.x
+          go-version: 1.21.11
 
       - name: Run unit tests
         run: go test ./...
@@ -86,7 +86,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: 1.18.x
+          go-version: 1.21.11
 
       - name: Validate Goreleaser config
         uses: goreleaser/goreleaser-action@v5
