@@ -73,6 +73,7 @@ func main() {
 	flag.StringVar(&opts.LogFormat, "log-format", "console", "Define log format. Allowed values: console, json")
 	flag.BoolVar(&opts.VerifyConfig, "verify-config", false, "Enable this flag to check config file loads, then exit")
 	flag.BoolVar(&opts.Version, "version", false, "set to print version information")
+	flag.BoolVar(&opts.EnableAutoReload, "enable-auto-reload", true, "Enable automatic config reload when the config file changes")
 	flag.Parse()
 
 	if opts.Version {
@@ -124,6 +125,38 @@ func main() {
 		logger.Error("Use the -enable-experimental flag or the enable_experimental option to enable these features. Use them at your own peril.")
 
 		os.Exit(1)
+	}
+
+	var configWatcher *config.ConfigWatcher
+	if opts.EnableAutoReload && opts.ConfigFile != "" {
+		configWatcher, err = config.NewConfigWatcher(logger, opts.ConfigFile, func() {
+			// Create a new config instance for reloading
+			newCfg := config.Config{
+				Listen: config.ListenConfig{
+					Port:            4040,
+					MetricsEndpoint: "/metrics",
+				},
+			}
+
+			if err := config.LoadConfigFromFile(logger, &newCfg, opts.ConfigFile); err != nil {
+				logger.Errorf("error reloading config: %v", err)
+				return
+			}
+
+			if stabilityError := newCfg.StabilityWarnings(); stabilityError != nil && !opts.EnableExperimentalFeatures {
+				logger.Errorf("reloaded config contains experimental features but they are not enabled")
+				return
+			}
+
+			// Update the current config
+			cfg = newCfg
+			logger.Info("configuration reloaded successfully")
+		})
+		if err != nil {
+			logger.Errorf("error setting up config watcher: %v", err)
+		} else {
+			defer configWatcher.Close()
+		}
 	}
 
 	if cfg.Consul.Enable {

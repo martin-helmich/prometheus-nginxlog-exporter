@@ -14,6 +14,7 @@ type StartupFlags struct {
 	MetricsEndpoint            string
 	VerifyConfig               bool
 	Version                    bool
+	EnableAutoReload           bool
 
 	LogLevel  string
 	LogFormat string
